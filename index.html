@@ -1064,8 +1064,22 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let historyLog=JSON.parse(localStorage.getItem('hf2026_history_v1')||'[]');
 function saveHistory(){
   localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog.slice(-500)));
-  // Supabaseにも保存（非同期、エラーは無視）
-  sb.from('history').insert(historyLog.slice(-10).map(h=>(({data:h})))).then(()=>{}).catch(()=>{});
+  // Supabaseに最新1件だけ追加
+  const latest=historyLog[historyLog.length-1];
+  if(latest) sb.from('history').insert([{data:latest}]).then(()=>{}).catch(()=>{});
+}
+
+// Supabaseから全履歴を読み込む
+async function loadHistoryFromSupabase(){
+  try{
+    const {data}=await sb.from('history').select('*').order('id',{ascending:false}).limit(500);
+    if(data&&data.length>0){
+      historyLog=data.map(r=>r.data).reverse();
+      localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog));
+    }
+  }catch(e){
+    console.warn('History load failed:', e);
+  }
 }
 
 let tasks=JSON.parse(localStorage.getItem('hf2026_v10')||'null')||INIT.map(t=>(({...t,month_statuses:{...t.month_statuses}})));
@@ -1098,6 +1112,7 @@ async function loadFromSupabase(){
     render();
     updateStats();
     setupRealtimeSync();
+    loadHistoryFromSupabase();
   }catch(e){
     console.warn('Supabase load failed, using local data:', e);
   }
@@ -1133,6 +1148,18 @@ function setupRealtimeSync(){
     .on('postgres_changes',{event:'*',schema:'public',table:'manuals'},payload=>{
       const taskId=payload.new?.task_id;
       if(taskId){ manuals[taskId]=payload.new.data; updateCommentBadge(); }
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'history'},payload=>{
+      const h=payload.new?.data;
+      if(!h) return;
+      // 重複チェック（自分が追加したものは既にローカルにある）
+      const exists=historyLog.some(x=>x.ts===h.ts&&x.taskId===h.taskId);
+      if(!exists){
+        historyLog.push(h);
+        historyLog.sort((a,b)=>a.ts-b.ts);
+        localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog));
+        if(currentTab==='history') render();
+      }
     })
     .subscribe((status)=>{
       console.log('Realtime status:', status);
@@ -1944,9 +1971,10 @@ function renderHistory(){
   return html;
 }
 function clearHistory(){
-  if(!confirm('変更履歴をすべて削除しますか？')) return;
+  if(!confirm('変更履歴をすべて削除しますか？\n（Supabase上の履歴もすべて削除されます）')) return;
   historyLog=[];
-  saveHistory();
+  localStorage.setItem('hf2026_history_v1','[]');
+  sb.from('history').delete().neq('id',0).then(()=>{}).catch(()=>{});
   render();
 }
 
