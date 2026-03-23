@@ -2859,7 +2859,7 @@ function rebuildFilters(){
 
   const aSel=document.getElementById('fAssignee');
   const pA=aSel.value;
-  aSel.innerHTML='<option value="">すべての担当者</option>'+assignees.filter(a=>a&&a!=='未定').map(a=>`<option value="${a}"${a===pA?' selected':''}>${a}</option>`).join('');
+  aSel.innerHTML='<option value="">すべての担当者</option>'+assignees.filter(a=>a&&a!=='未定').map(a=>`<option value="${a}"${a===pA?' selected':''}>${a}</option>`).join('')+'<option value="未定"'+(pA==='未定'?' selected':'')+'>未定</option>';
 
   const mSel=document.getElementById('fMonth');
   const pM=mSel.value;
