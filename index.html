@@ -233,14 +233,13 @@ select option{background:#fff;}
   .sch-legend { display: none !important; }
   #print-header { display: block !important; }
 }
-.sch-row:hover .sch-cat-cell,.sch-row:hover .sch-sub-cell{background:#fff!important;}
 .sch-head th.mo-now{color:var(--accent);font-weight:700;}
 .sch-grp td{padding:7px 16px;font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;font-size:13px;font-weight:700;border-bottom:1px solid var(--border);background:linear-gradient(90deg,var(--accent-light),transparent);position:sticky;left:0;letter-spacing:.04em;z-index:2;border-left:3px solid var(--cc-grp,var(--accent));}
 .sch-grp span.grp-prog{font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;font-size:10px;color:var(--muted);margin-left:12px;font-weight:400;}
 .sch-row td{padding:0;border-bottom:1px solid var(--border2);}
 .sch-row.sub-inner td:not(.sch-cat-cell):not(.sch-sub-cell){border-bottom:1px dashed var(--border2)!important;}
 .sch-label{padding:0 10px 0 14px;width:310px;min-width:310px;position:sticky;left:0;z-index:2;background:var(--surface);border-right:1px solid var(--border2);cursor:pointer;transition:background .15s;vertical-align:top;}
-.sch-label:hover{background:#fff!important;}
+.sch-label:hover{background:inherit!important;}
 .sch-label-inner{padding:7px 0;display:flex;flex-direction:column;gap:2px;}
 .sch-label-sub{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:275px;}
 .sch-label-detail{font-size:10px;color:var(--text2);white-space:pre-line;line-height:1.55;max-width:275px;word-break:break-all;overflow:visible;text-align:left;}
@@ -295,7 +294,8 @@ select option{background:#fff;}
 .drag-handle:hover{opacity:1;color:var(--accent);}
 .drag-handle:active{cursor:grabbing;}
 .sch-label-wrap{display:flex;align-items:center;gap:0;}
-.sch-row:hover td{background:#fff!important;}
+.sch-row td:hover{background:#dbeafe!important;}
+.sch-label:hover{background:#dbeafe!important;}
 .sch-row.drag-over td{background:var(--accent-light)!important;outline:2px dashed var(--accent);}
 .sch-row.dragging{opacity:.4;}
 
@@ -1096,7 +1096,7 @@ function setupRealtimeSync(){
       const idx=tasks.findIndex(t=>t.id===newTask.id);
       if(idx>=0) tasks[idx]=newTask; else tasks.push(newTask);
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-      rebuildFilters(); render();
+      rebuildFilters(); renderKeepScroll();
       showSyncNotice('タスクが更新されました');
     })
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'tasks'},payload=>{
@@ -1105,12 +1105,12 @@ function setupRealtimeSync(){
       const idx=tasks.findIndex(t=>t.id===newTask.id);
       if(idx>=0) tasks[idx]=newTask; else tasks.push(newTask);
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-      rebuildFilters(); render();
+      rebuildFilters(); renderKeepScroll();
       showSyncNotice('タスクが更新されました');
     })
     .on('postgres_changes',{event:'DELETE',schema:'public',table:'tasks'},payload=>{
       const delId=payload.old?.id;
-      if(delId){ tasks=tasks.filter(t=>t.id!==delId); render(); }
+      if(delId){ tasks=tasks.filter(t=>t.id!==delId); renderKeepScroll(); }
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'manuals'},payload=>{
       const taskId=payload.new?.task_id;
@@ -1491,7 +1491,7 @@ function renderSchedule(f){
   const assLeft=isMobile?(26+60+110)+'px':'434px';
   const assW=isMobile?'36px':'50px';
 
-const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;font-size:12px;color:${m===NOW_MONTH?'var(--accent)':'#4a5568'};letter-spacing:.03em;font-weight:700;text-align:center;white-space:nowrap;border-bottom:2px solid var(--border);background:${m===HONBAN_MONTH?'#ffe066':m===NOW_MONTH?'rgba(232,93,38,.06)':'var(--bg2)'}">${m}${m===NOW_MONTH?' ◀':''}</th>`).join('');
+const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;font-size:12px;color:${m===NOW_MONTH?'var(--accent)':'#4a5568'};letter-spacing:.03em;font-weight:700;text-align:center;white-space:nowrap;border-bottom:2px solid var(--border);background:${m===HONBAN_MONTH?'#ffe066':m===NOW_MONTH?'#fff0eb':'#edf0f7'};${m===NOW_MONTH?'outline:2px solid var(--accent);outline-offset:-1px;':m===HONBAN_MONTH?'outline:2px solid #b38600;outline-offset:-1px;':''}">${m}${m===NOW_MONTH?' ◀':''}</th>`).join('');
 
   let html=`
   <div class="sch-legend">
@@ -1518,9 +1518,18 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
 
   cats.forEach(cat=>{
     const catTasks=f.filter(t=>t.category===cat);
-    // 中項目の見出し行数を計算してrowspanに加算
-    const midHeaders=[...new Set(catTasks.map(t=>t.midcategory||'').filter(m=>m))];
-    const catRowspan=catTasks.length + midHeaders.length;
+    // 中項目ヘッダー行が何行挿入されるか正確にシミュレート
+    // mid-headerはsubFirstがtrueの最初の行の直前に挿入される
+    // → subGroupをたどりながら、各タスクで中項目が変わったときに1行追加
+    let midCountSim=0;
+    let prevMidSim='__NONE__';
+    catTasks.forEach(t=>{
+      const mid=t.midcategory||'';
+      if(mid && mid!==prevMidSim){ midCountSim++; prevMidSim=mid; }
+    });
+    // 最初のタスクが中項目を持つ場合、その見出し行はcatCellより前に描画されるため除外
+    const firstMid=catTasks[0]?.midcategory||'';
+    const catRowspan=catTasks.length + midCountSim - (firstMid?1:0);
     let catFirst=true;
     let prevMid='__NONE__';
 
@@ -1546,8 +1555,10 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
 
         // 中項目が変わったら見出し行を挿入
         if(mid && mid!==prevMid){
+          // catFirstがfalseのとき大項目セルがrowspanで占有しているので列数を1減らす
+          const midColspan=catFirst?TOTAL_COLS:TOTAL_COLS-1;
           html+=`<tr class="sch-mid-header-row">
-            <td colspan="${TOTAL_COLS}" style="padding:5px 10px 5px ${catFirst?'14px':'180px'};font-size:11px;font-weight:700;color:var(--text2);background:var(--bg2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);letter-spacing:.04em">
+            <td colspan="${midColspan}" style="padding:5px 10px;font-size:11px;font-weight:700;color:var(--text2);background:var(--bg2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);letter-spacing:.04em">
               ▶ ${mid}
             </td>
           </tr>`;
@@ -1562,7 +1573,7 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
 
         // 大項目（catFirst）
         if(catFirst){
-          html+=`<td rowspan="${catRowspan}" class="sch-cat-cell" style="background:#fff;border-right:2px solid ${cc(cat)};${CAT_BORDER};vertical-align:middle;text-align:center;position:sticky;left:0;z-index:10;width:${catW};min-width:${catW};box-shadow:2px 0 0 #b0b8c8">
+          html+=`<td rowspan="${catRowspan}" class="sch-cat-cell" style="background:${cc(cat)}18;border-right:2px solid ${cc(cat)};${CAT_BORDER};vertical-align:middle;text-align:center;position:sticky;left:0;z-index:10;width:${catW};min-width:${catW};box-shadow:2px 0 0 #b0b8c8">
             <div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:40px">
               <span style="font-size:${isMobile?'10px':'14px'};font-weight:700;color:${cc(cat)};font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:mixed;-webkit-text-orientation:mixed;letter-spacing:.1em">${cat}</span>
             </div>
@@ -1573,7 +1584,7 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
         // 小項目（subFirst）
         if(subFirst){
           const isLastSub = (sub === (subGroups[subGroups.length-1]?.sub||''));
-          html+=`<td rowspan="${subRowspan}" class="sch-sub-cell" style="vertical-align:middle;border-right:2px solid #b0b8c8;${isLastSub?CAT_BORDER:'border-bottom:1px solid var(--border2)'};position:sticky;left:${catW};z-index:15;background:#fff;width:${subW};min-width:${subW};padding:${isMobile?'3px 4px':'6px 8px'};text-align:center;box-shadow:2px 0 0 #b0b8c8">
+          html+=`<td rowspan="${subRowspan}" class="sch-sub-cell" style="vertical-align:middle;border-right:2px solid #b0b8c8;${isLastSub?CAT_BORDER:'border-bottom:1px solid var(--border2)'};position:sticky;left:${catW};z-index:15;background:${cc(cat)}12;width:${subW};min-width:${subW};padding:${isMobile?'3px 4px':'6px 8px'};text-align:center;box-shadow:2px 0 0 #b0b8c8">
             <div style="font-size:11px;font-weight:700;color:var(--text);line-height:1.55;white-space:pre-line;word-break:break-all">${formatSubcategory(sub)}</div>
           </td>`;
           subFirst=false;
@@ -1995,7 +2006,7 @@ function addAssignee(){
   const inp=document.getElementById('newAssigneeName');
   const name=inp.value.trim();
   if(!name||assignees.includes(name))return;
-  assignees.push(name);inp.value='';save();rebuildFilters();render();
+  assignees.push(name);inp.value='';save();rebuildFilters();renderKeepScroll();
 }
 function delAssignee(name){
   assignees=assignees.filter(a=>a!==name);save();render();
@@ -2116,16 +2127,22 @@ function patchScheduleRow(id){
 }
 /* スクロール位置を保ったまま再描画（ダブルrAFで確実に復元） */
 function renderKeepScroll(){
+  // スクロール位置を保存
   const outer=document.getElementById('scheduleOuter');
+  const vs=document.getElementById('viewScroll');
   const sx=outer?outer.scrollLeft:0;
   const sy=outer?outer.scrollTop:0;
+  const vsy=vs?vs.scrollTop:0;
+
   render();
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      const o=document.getElementById('scheduleOuter');
-      if(o){o.scrollLeft=sx;o.scrollTop=sy;}
-    });
-  });
+
+  // 確実に復元するためsetTimeoutを使う
+  setTimeout(()=>{
+    const o=document.getElementById('scheduleOuter');
+    const v=document.getElementById('viewScroll');
+    if(o){ o.scrollLeft=sx; o.scrollTop=sy; }
+    if(v) v.scrollTop=vsy;
+  }, 50);
 }
 
 /* 担当者インライン変更 */
@@ -2491,7 +2508,7 @@ function saveTask(){
   }else{
     tasks.push({id:nextId++,...data});
   }
-  save();closeModal();rebuildFilters();render();
+  save();closeModal();rebuildFilters();renderKeepScroll();
 }
 
 /* ═══════════════ DELETE ═══════════════ */
@@ -2506,7 +2523,7 @@ function openDel(id){
 function closeConfirm(){document.getElementById('confirmModal').style.display='none';}
 function confirmDelete(){
   tasks=tasks.filter(t=>t.id!==deleteId);
-  save();closeConfirm();rebuildFilters();render();
+  save();closeConfirm();rebuildFilters();renderKeepScroll();
 }
 
 /* ═══════════════ MANUAL MODAL ═══════════════ */
@@ -2599,7 +2616,6 @@ function saveManual(){
   save();
   const n=document.getElementById('mmSavedNote');
   n.style.opacity='1';setTimeout(()=>n.style.opacity='0',1800);
-  render();
 }
 
 /* ═══════════════ EXPORT ═══════════════ */
