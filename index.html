@@ -1083,6 +1083,7 @@ async function loadFromSupabase(){
     }
     rebuildFilters();
     render();
+    updateStats();
     setupRealtimeSync();
   }catch(e){
     console.warn('Supabase load failed, using local data:', e);
@@ -3029,6 +3030,14 @@ document.getElementById('viewContent').addEventListener('keydown',e=>{
 });
 
 rebuildFilters();updateStats();render();
+// カウントダウン初期表示
+(()=>{
+  const honban=new Date('2026-09-06');
+  const today=new Date();today.setHours(0,0,0,0);honban.setHours(0,0,0,0);
+  const diff=Math.round((honban-today)/(1000*60*60*24));
+  const el=document.getElementById('sCountdownDays');
+  if(el) el.textContent=diff>0?diff:(diff===0?'今日！':'終了');
+})();
 // Supabaseからデータ読み込み
 loadFromSupabase();
 
