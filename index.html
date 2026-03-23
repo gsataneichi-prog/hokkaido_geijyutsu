@@ -543,7 +543,7 @@ select option{background:#fff;}
   <button class="tab" id="tab-assignee" onclick="setTab('assignee')">👥 担当者管理</button>
   <button class="tab" id="tab-history" onclick="setTab('history')">📜 変更履歴</button>
   <button class="tab" id="tab-help" onclick="setTab('help')">❓ ヘルプ</button>
-  <button class="tab" onclick="window.open('https://docs.google.com/spreadsheets/d/1WcX6rRLT4klRqcO48rApdF2CEJf1vO_-Y5Ih3x86VDY/edit?usp=sharing','_blank')" style="color:var(--green);gap:5px">📊 総合スプレッドシート ↗</button>
+  <button class="tab" onclick="window.open('https://docs.google.com/spreadsheets/d/1WcX6rRLT4klRqcO48rApdF2CEJf1vO_-Y5Ih3x86VDY/edit?usp=sharing','_blank')" style="margin:6px 0 6px 8px;padding:5px 14px;background:#16a34a;color:#fff;border-radius:20px;font-size:11px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;flex-shrink:0">📊 総合スプレッドシート ↗</button>
   <button id="collapseToggle" onclick="toggleCollapse()" title="フィルター・凡例を折りたたむ" style="margin-left:auto;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer;white-space:nowrap">▲ 折りたたむ</button>
 </div>
 
@@ -1868,9 +1868,8 @@ function renderHelp(){
     </div>
 
     <!-- データ管理 -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px">
-      <h3 style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">💾 データ管理</h3>
-      <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
+      <h3 style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">💾 データ管理</h3>      <div style="display:flex;flex-direction:column;gap:8px">
         ${[
           ['💾 バックアップ','全データをJSONで保存（定期的に推奨）'],
           ['♻️ 復元','バックアップから全データを復元'],
@@ -1882,6 +1881,20 @@ function renderHelp(){
           <div style="font-size:12px;color:var(--text2)">${desc}</div>
         </div>`).join('')}
       </div>
+    </div>
+
+    <!-- 関連リンク -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <h3 style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">🔗 関連リンク</h3>
+      <a href="https://docs.google.com/spreadsheets/d/1WcX6rRLT4klRqcO48rApdF2CEJf1vO_-Y5Ih3x86VDY/edit?usp=sharing" target="_blank"
+        style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg2);border-radius:8px;text-decoration:none;border:1px solid var(--border);transition:border-color .18s"
+        onmouseover="this.style.borderColor='#16a34a'" onmouseout="this.style.borderColor='var(--border)'">
+        <span style="font-size:20px">📊</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">総合スプレッドシート</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Google スプレッドシートで開く ↗</div>
+        </div>
+      </a>
     </div>
 
   </div>`;
