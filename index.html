@@ -48,9 +48,12 @@ body{font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-ser
 .btn-danger{background:var(--red-light);color:var(--red);border:1px solid #f5c0cb;}
 .btn-danger:hover{background:#fbd5dc;}
 .btn-sm{padding:5px 10px;font-size:11px;}
+.menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:10px 16px;border:none;background:transparent;color:var(--text);font-size:12px;font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;cursor:pointer;text-align:left;transition:background .15s;}
+.menu-item:hover{background:var(--accent-light);color:var(--accent);}
+.menu-item+.menu-item{border-top:1px solid var(--border);}
 
 /* ── Tabs ── */
-.tabs{display:flex;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;}
+.tabs{display:flex;align-items:center;padding:0 24px 0 24px;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;}
 .tab{padding:11px 17px;border:none;background:transparent;color:var(--muted);font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;transition:all .18s;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0;font-weight:500;}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .tab:hover:not(.active){color:var(--text2);background:var(--bg2);}
@@ -512,22 +515,28 @@ select option{background:#fff;}
   </div>
   <div class="topbar-stats">
     <div id="sCommentBadge" onclick="showUnreadComments()" title="未読コメントを確認" style="display:none;cursor:pointer;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;box-shadow:0 0 0 3px rgba(124,58,237,.3),0 2px 8px rgba(124,58,237,.4);align-items:center;gap:6px;white-space:nowrap;flex-shrink:0">💬 <span id="sComment">0</span> 件の新着</div>
+    <div class="stat" id="sCountdown" style="border-color:#b38600;background:#fffbeb;flex-shrink:0">🎆 本番まで <span class="n" id="sCountdownDays" style="color:#b38600">-</span> 日</div>
     <div class="stat total"><span class="n" id="sTot">0</span> 総タスク</div>
-    <div class="stat done"><span class="n" id="sDone">0</span> 完了</div>
-    <div class="stat todo"><span class="n" id="sTodo">0</span> 未着手</div>
-    <div class="stat pct"><span class="n" id="sPct">0</span>% 進捗</div>
     <div class="stat" style="cursor:pointer;border-color:#f5c0cb" onclick="setAlertFilter('due')" title="今月が期限のタスク"><span class="n" id="sDue" style="color:#e85d26">0</span> 今月期限</div>
     <div class="stat" style="cursor:pointer;border-color:#f5c0cb" onclick="setAlertFilter('overdue')" title="期限を過ぎた未着手タスク"><span class="n" id="sOverdue" style="color:#d63a55">0</span> ⚠️ 遅延</div>
-    <div class="stat" id="sCountdown" style="border-color:#b38600;background:#fffbeb;flex-shrink:0">🎆 本番まで <span class="n" id="sCountdownDays" style="color:#b38600">-</span> 日</div>
+    <div class="stat todo"><span class="n" id="sTodo" style="color:#e85d26">0</span> 未着手</div>
+    <div class="stat wip"><span class="n" id="sWip" style="color:#16a34a">0</span> 進行中</div>
+    <div class="stat done"><span class="n" id="sDone" style="color:#b38600">0</span> 完了（<span id="sPct">0</span>%）</div>
   </div>
-  <div class="topbar-actions">
-    <button class="btn btn-ghost" onclick="exportCSV()">📥 CSV出力</button>
-    <button class="btn btn-ghost" onclick="document.getElementById('csvImportInput').click()">📤 CSVインポート</button>
+  <div class="topbar-actions" style="margin-left:auto">
     <input type="file" id="csvImportInput" accept=".csv" style="display:none" onchange="importCSV(this)">
-    <button class="btn btn-ghost" onclick="exportJSON()" title="全データをJSONで保存">💾 バックアップ</button>
-    <button class="btn btn-ghost" onclick="document.getElementById('jsonRestoreInput').click()" title="JSONから全データを復元">♻️ 復元</button>
     <input type="file" id="jsonRestoreInput" accept=".json" style="display:none" onchange="importJSON(this)">
-    <button class="btn btn-ghost" onclick="printSchedule()">🖨️ 印刷／PDF</button>
+    <!-- メニューボタン -->
+    <div style="position:relative">
+      <button class="btn btn-ghost" id="menuToggleBtn" onclick="toggleActionMenu()" style="gap:4px">⚙️ メニュー <span style="font-size:9px" id="menuArrow">▼</span></button>
+      <div id="actionMenu" style="display:none;position:fixed;right:8px;top:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.18);z-index:9999;min-width:160px;overflow:hidden">
+        <button class="menu-item" onclick="exportCSV();toggleActionMenu()">📥 CSV出力</button>
+        <button class="menu-item" onclick="document.getElementById('csvImportInput').click();toggleActionMenu()">📤 CSVインポート</button>
+        <button class="menu-item" onclick="exportJSON();toggleActionMenu()">💾 バックアップ</button>
+        <button class="menu-item" onclick="document.getElementById('jsonRestoreInput').click();toggleActionMenu()">♻️ 復元</button>
+        <button class="menu-item" onclick="printSchedule();toggleActionMenu()">🖨️ 印刷／PDF</button>
+      </div>
+    </div>
     <button class="btn btn-primary" onclick="openAddModal()">＋ タスク追加</button>
   </div>
 </div>
@@ -535,8 +544,8 @@ select option{background:#fff;}
 <!-- Collapse Toggle -->
 <div style="position:relative;flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden">
 
-<!-- Tabs (常時表示) -->
-<div class="tabs" style="position:relative">
+<div style="position:relative;display:flex;align-items:stretch">
+<div class="tabs" style="position:relative;flex:1">
   <button class="tab active" id="tab-schedule" onclick="setTab('schedule')">📅 スケジュール</button>
   <button class="tab" id="tab-heatmap" onclick="setTab('heatmap')">🗓 タイムライン</button>
   <button class="tab" id="tab-category" onclick="setTab('category')">📂 カテゴリ別</button>
@@ -544,7 +553,10 @@ select option{background:#fff;}
   <button class="tab" id="tab-history" onclick="setTab('history')">📜 変更履歴</button>
   <button class="tab" id="tab-help" onclick="setTab('help')">❓ ヘルプ</button>
   <button class="tab" onclick="window.open('https://docs.google.com/spreadsheets/d/1WcX6rRLT4klRqcO48rApdF2CEJf1vO_-Y5Ih3x86VDY/edit?usp=sharing','_blank')" style="margin:6px 0 6px 8px;padding:5px 14px;background:#16a34a;color:#fff;border-radius:20px;font-size:11px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;flex-shrink:0">📊 総合スプレッドシート ↗</button>
-  <button id="collapseToggle" onclick="toggleCollapse()" title="フィルター・凡例を折りたたむ" style="margin-left:auto;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer;white-space:nowrap">▲ 折りたたむ</button>
+</div>
+<div style="display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0">
+  <button id="collapseToggle" onclick="toggleCollapse()" title="フィルター・凡例を折りたたむ" style="display:flex;align-items:center;gap:4px;padding:5px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text2);font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;font-size:11px;cursor:pointer;font-weight:500;white-space:nowrap;height:32px;box-sizing:border-box">▲ 折りたたむ</button>
+</div>
 </div>
 
 <!-- Main -->
@@ -1336,11 +1348,13 @@ function markAllRead(){
 function updateStats(){
   const tot=tasks.length;
   const done=tasks.filter(t=>taskStatus(t)==='完了').length;
+  const wip=tasks.filter(t=>taskStatus(t)==='進行中').length;
   const todo=tasks.filter(t=>taskStatus(t)==='未').length;
   const due=tasks.filter(t=>isDueThisMonth(t)).length;
   const overdue=tasks.filter(t=>isOverdue(t)).length;
   document.getElementById('sTot').textContent=tot;
   document.getElementById('sDone').textContent=done;
+  const wipEl=document.getElementById('sWip');if(wipEl)wipEl.textContent=wip;
   document.getElementById('sTodo').textContent=todo;
   document.getElementById('sPct').textContent=tot?Math.round(done/tot*100):0;
   document.getElementById('sDue').textContent=due;
@@ -1798,6 +1812,19 @@ function renderHeatmap(){
 
 /* ═══════════════ HELP VIEW ═══════════════ */
 function renderHelp(){
+  function row(op,desc){
+    return`<div style="display:flex;gap:12px;padding:8px 10px;background:var(--bg2);border-radius:8px;align-items:center">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);min-width:170px;flex-shrink:0">${op}</div>
+      <div style="font-size:12px;color:var(--text2)">${desc}</div>
+    </div>`;
+  }
+  function section(title,rows){
+    return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
+      <h3 style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">${title}</h3>
+      <div style="display:flex;flex-direction:column;gap:8px">${rows.map(r=>row(r[0],r[1])).join('')}</div>
+    </div>`;
+  }
+
   return`<div style="padding:24px;max-width:800px;margin:0 auto">
     <h2 style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:20px">❓ 使い方ガイド</h2>
 
@@ -1814,74 +1841,46 @@ function renderHelp(){
       </div>
     </div>
 
-    <!-- スケジュール操作 -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
-      <h3 style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">📅 スケジュール表の操作</h3>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${[
-          ['クリック（月セル）','ステータスを切り替え（未→進行中→完了→未）'],
-          ['ダブルクリック（月セル）','新しい月にステータスを追加'],
-          ['クリック（担当者欄）','担当者をプルダウンで変更'],
-          ['💬 ボタン','コメント・メモ・URLを入力・確認'],
-          ['🗑 ボタン','タスクを削除'],
-        ].map(([op,desc])=>`
-        <div style="display:flex;gap:12px;padding:8px 10px;background:var(--bg2);border-radius:8px;align-items:center">
-          <div style="font-size:12px;font-weight:700;color:var(--accent);min-width:160px;flex-shrink:0">${op}</div>
-          <div style="font-size:12px;color:var(--text2)">${desc}</div>
-        </div>`).join('')}
-      </div>
-    </div>
+    ${section('📅 スケジュール表の操作',[
+      ['クリック（月セル）','ステータスを切り替え（未→進行中→完了→未）'],
+      ['ダブルクリック（月セル）','新しい月にステータスを追加'],
+      ['クリック（担当者欄）','担当者をプルダウンで変更'],
+      ['💬 ボタン','コメント・メモ・参照URLを入力・確認'],
+      ['🗑 ボタン','タスクを削除'],
+    ])}
 
-    <!-- フィルター -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
-      <h3 style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">🔍 フィルター・検索</h3>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${[
-          ['▼ 展開ボタン','検索・フィルター欄を表示/非表示'],
-          ['テキスト検索','タスク名・担当者・詳細でキーワード検索'],
-          ['📅 今月期限','今月（3月）が期限のタスクを絞り込み'],
-          ['⚠️ 遅延','期限が過ぎた未着手タスクを絞り込み'],
-        ].map(([op,desc])=>`
-        <div style="display:flex;gap:12px;padding:8px 10px;background:var(--bg2);border-radius:8px;align-items:center">
-          <div style="font-size:12px;font-weight:700;color:var(--accent);min-width:160px;flex-shrink:0">${op}</div>
-          <div style="font-size:12px;color:var(--text2)">${desc}</div>
-        </div>`).join('')}
-      </div>
-    </div>
+    ${section('🔍 フィルター・検索',[
+      ['▲折りたたむ / ▼展開','検索・フィルター欄を表示/非表示'],
+      ['テキスト検索','タスク名・担当者・詳細でキーワード検索'],
+      ['カテゴリ / 担当者 / 月','プルダウンで絞り込み（未定も選択可能）'],
+      ['📅 今月期限','今月（3月）が期限のタスクを絞り込み'],
+      ['⚠️ 遅延','期限が過ぎた未着手タスクを絞り込み'],
+    ])}
 
-    <!-- タブ説明 -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
-      <h3 style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">📑 タブ説明</h3>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${[
-          ['📅 スケジュール','全タスクのガントチャート表示'],
-          ['🗓 タイムライン','カテゴリ×月のヒートマップ'],
-          ['📂 カテゴリ別','大項目ごとのタスク一覧と進捗'],
-          ['👥 担当者管理','担当者ごとのタスク・進捗確認'],
-          ['📜 変更履歴','誰がいつ変更したか全履歴'],
-        ].map(([tab,desc])=>`
-        <div style="display:flex;gap:12px;padding:8px 10px;background:var(--bg2);border-radius:8px;align-items:center">
-          <div style="font-size:12px;font-weight:700;color:var(--text);min-width:160px;flex-shrink:0">${tab}</div>
-          <div style="font-size:12px;color:var(--text2)">${desc}</div>
-        </div>`).join('')}
-      </div>
-    </div>
+    ${section('💬 コメント・メモ機能',[
+      ['💬 ボタンをクリック','コメント・メモ・参照URLの入力画面を開く'],
+      ['コメント投稿','担当者を選んで投稿。投稿ボタンのみで送信（Enterキー無効）'],
+      ['未読通知','新着コメントは左上に紫バッジ「💬 〇件の新着」で表示'],
+      ['バッジをクリック','未読コメント一覧を確認。クリックで対象タスクへ移動'],
+    ])}
 
-    <!-- データ管理 -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
-      <h3 style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">💾 データ管理</h3>      <div style="display:flex;flex-direction:column;gap:8px">
-        ${[
-          ['💾 バックアップ','全データをJSONで保存（定期的に推奨）'],
-          ['♻️ 復元','バックアップから全データを復元'],
-          ['📥 CSV出力','タスク一覧をExcel形式で出力'],
-          ['💬 新着バッジ','新しいコメントがあると左上に表示'],
-        ].map(([op,desc])=>`
-        <div style="display:flex;gap:12px;padding:8px 10px;background:var(--bg2);border-radius:8px;align-items:center">
-          <div style="font-size:12px;font-weight:700;color:var(--accent);min-width:160px;flex-shrink:0">${op}</div>
-          <div style="font-size:12px;color:var(--text2)">${desc}</div>
-        </div>`).join('')}
-      </div>
-    </div>
+    ${section('📑 タブ説明',[
+      ['📅 スケジュール','全タスクのガントチャート（メイン画面）'],
+      ['🗓 タイムライン','カテゴリ×月のヒートマップで全体把握'],
+      ['📂 カテゴリ別','大項目ごとのタスク一覧と進捗バー'],
+      ['👥 担当者管理','担当者ごとのタスク・進捗・月別分布を確認'],
+      ['📜 変更履歴','誰がいつステータスを変更したか全履歴'],
+      ['❓ ヘルプ','この画面'],
+      ['📊 総合スプレッドシート','Googleスプレッドシートを新しいタブで開く'],
+    ])}
+
+    ${section('⚙️ メニューボタンの機能',[
+      ['📥 CSV出力','タスク一覧をExcel形式で保存'],
+      ['📤 CSVインポート','CSVからタスクを一括追加・更新'],
+      ['💾 バックアップ','全データをJSONで保存（定期的に推奨）'],
+      ['♻️ 復元','バックアップJSONから全データを復元'],
+      ['🖨️ 印刷/PDF','スケジュール表を印刷・PDF出力'],
+    ])}
 
     <!-- 関連リンク -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px">
@@ -2996,6 +2995,30 @@ function importJSON(input){
   };
   reader.readAsText(file,'UTF-8');
 }
+
+function toggleActionMenu(){
+  const menu=document.getElementById('actionMenu');
+  const btn=document.getElementById('menuToggleBtn');
+  const arrow=document.getElementById('menuArrow');
+  const open=menu.style.display==='none';
+  menu.style.display=open?'block':'none';
+  if(open&&btn){
+    const r=btn.getBoundingClientRect();
+    menu.style.top=(r.bottom+6)+'px';
+    menu.style.right=(window.innerWidth-r.right)+'px';
+  }
+  if(arrow) arrow.textContent=open?'▲':'▼';
+}
+// メニュー外クリックで閉じる
+document.addEventListener('click',e=>{
+  const menu=document.getElementById('actionMenu');
+  const btn=document.getElementById('menuToggleBtn');
+  if(menu&&btn&&!menu.contains(e.target)&&!btn.contains(e.target)){
+    menu.style.display='none';
+    const arrow=document.getElementById('menuArrow');
+    if(arrow) arrow.textContent='▼';
+  }
+});
 
 function exportCSV(){
   const h=['ID','カテゴリ','小項目','詳細','担当者','月ステータス'];
