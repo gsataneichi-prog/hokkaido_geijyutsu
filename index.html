@@ -1105,7 +1105,9 @@ function setupRealtimeSync(){
       const idx=tasks.findIndex(t=>t.id===newTask.id);
       if(idx>=0) tasks[idx]=newTask; else tasks.push(newTask);
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-      rebuildFilters(); renderKeepScroll();
+      // 変更があった行だけ更新（全再描画しない）
+      if(currentTab==='schedule') patchScheduleRow(newTask.id);
+      updateStats();
       showSyncNotice('タスクが更新されました');
     })
     .on('postgres_changes',{event:'DELETE',schema:'public',table:'tasks'},payload=>{
@@ -1137,18 +1139,24 @@ function showSyncNotice(msg){
 }
 let nextId=213;
 
-function save(){
+function save(changedTaskId=null){
   localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
   localStorage.setItem('hf2026_assignees_v8',JSON.stringify(assignees));
   localStorage.setItem('hf2026_manuals_v10',JSON.stringify(manuals));
-  // Supabaseに非同期保存
-  saveToSupabase();
+  // Supabaseに非同期保存（変更したタスクのみ）
+  saveToSupabase(changedTaskId);
 }
 
-async function saveToSupabase(){
+async function saveToSupabase(changedTaskId=null){
   try{
-    // タスクをupsert（追加・更新）
-    await sb.from('tasks').upsert(tasks.map(t=>({id:t.id,data:t,updated_at:new Date().toISOString()})));
+    if(changedTaskId){
+      // 変更があったタスクだけupsert
+      const t=tasks.find(x=>x.id===changedTaskId);
+      if(t) await sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]);
+    } else {
+      // 全タスクupsert（初回・インポート時）
+      await sb.from('tasks').upsert(tasks.map(t=>({id:t.id,data:t,updated_at:new Date().toISOString()})));
+    }
     // メモ・コメントをupsert
     const manualRows=Object.entries(manuals).map(([k,v])=>({task_id:parseInt(k),data:v,updated_at:new Date().toISOString()}));
     if(manualRows.length) await sb.from('manuals').upsert(manualRows);
@@ -2037,7 +2045,7 @@ function toggleMonthStatus(id, month){
     to: next
   });
   saveHistory();
-  save();
+  save(id);
   patchScheduleRow(id);
   updateStats();
 }
@@ -2126,23 +2134,28 @@ function patchScheduleRow(id){
   });
 }
 /* スクロール位置を保ったまま再描画（ダブルrAFで確実に復元） */
+// スクロール位置をグローバルで保持
+let _savedScrollLeft=0, _savedScrollTop=0, _savedViewTop=0;
+
+function saveScrollPos(){
+  const o=document.getElementById('scheduleOuter');
+  const v=document.getElementById('viewScroll');
+  if(o){_savedScrollLeft=o.scrollLeft;_savedScrollTop=o.scrollTop;}
+  if(v) _savedViewTop=v.scrollTop;
+}
+
+function restoreScrollPos(){
+  const o=document.getElementById('scheduleOuter');
+  const v=document.getElementById('viewScroll');
+  if(o){o.scrollLeft=_savedScrollLeft;o.scrollTop=_savedScrollTop;}
+  if(v) v.scrollTop=_savedViewTop;
+}
+
 function renderKeepScroll(){
-  // スクロール位置を保存
-  const outer=document.getElementById('scheduleOuter');
-  const vs=document.getElementById('viewScroll');
-  const sx=outer?outer.scrollLeft:0;
-  const sy=outer?outer.scrollTop:0;
-  const vsy=vs?vs.scrollTop:0;
-
+  saveScrollPos();
   render();
-
-  // 確実に復元するためsetTimeoutを使う
-  setTimeout(()=>{
-    const o=document.getElementById('scheduleOuter');
-    const v=document.getElementById('viewScroll');
-    if(o){ o.scrollLeft=sx; o.scrollTop=sy; }
-    if(v) v.scrollTop=vsy;
-  }, 50);
+  // 100ms後に復元（DOM再構築完了を待つ）
+  setTimeout(restoreScrollPos, 100);
 }
 
 /* 担当者インライン変更 */
@@ -2341,6 +2354,7 @@ function cancelDelComment(){
 }
 
 function openAddModal(){
+  saveScrollPos();
   editingId=null;
   document.getElementById('modalTitle').textContent='✨ タスクを追加';
   const info=document.getElementById('modalTaskInfo');
@@ -2357,6 +2371,7 @@ function openEditTab2(id){
   setTimeout(()=>switchEditTab(2),50);
 }
 function openEdit(id){
+  saveScrollPos();
   editingId=id;
   const t=tasks.find(x=>x.id===id);if(!t)return;
   document.getElementById('modalTitle').textContent='✏️ タスクを編集';
@@ -2508,7 +2523,8 @@ function saveTask(){
   }else{
     tasks.push({id:nextId++,...data});
   }
-  save();closeModal();rebuildFilters();renderKeepScroll();
+  save();closeModal();rebuildFilters();
+  if(currentTab==='schedule') renderKeepScroll(); else render();
 }
 
 /* ═══════════════ DELETE ═══════════════ */
@@ -2523,7 +2539,8 @@ function openDel(id){
 function closeConfirm(){document.getElementById('confirmModal').style.display='none';}
 function confirmDelete(){
   tasks=tasks.filter(t=>t.id!==deleteId);
-  save();closeConfirm();rebuildFilters();renderKeepScroll();
+  save();closeConfirm();rebuildFilters();
+  if(currentTab==='schedule') renderKeepScroll(); else render();
 }
 
 /* ═══════════════ MANUAL MODAL ═══════════════ */
