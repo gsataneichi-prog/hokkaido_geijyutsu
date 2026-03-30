@@ -2756,11 +2756,22 @@ function saveTask(){
   }else{
     tasks.push({id:nextId++,...data});
   }
-  // 自分の更新を記録（リアルタイムで返ってきたときに無視）
+  // URLも保存（タブ1に移動したので）
   const savedId=editingId!==null?editingId:nextId-1;
+  if(editingId!==null){
+    // manuals のURLを保持（削除しない）
+    if(!manuals[editingId]) manuals[editingId]={urls:[],memo:'',comments:[]};
+    localStorage.setItem('hf2026_manuals_v10',JSON.stringify(manuals));
+  }
+  // 自分の更新を記録（リアルタイムで返ってきたときに無視）
   _myRecentUpdates.add(savedId);
-  // fmMemoがない場合のエラー対策
-  save(savedId);closeModal();rebuildFilters();
+  // localStorageに即保存してからSupabaseへ
+  localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+  const taskToSave=tasks.find(x=>x.id===savedId);
+  if(taskToSave){
+    sb.from('tasks').upsert([{id:taskToSave.id,data:taskToSave,updated_at:new Date().toISOString()}]).then(()=>{}).catch(e=>console.warn(e));
+  }
+  closeModal();rebuildFilters();
   if(currentTab==='schedule') renderKeepScroll(); else render();
 }
 
