@@ -2233,7 +2233,6 @@ function toggleMonthStatus(id, month){
     const latest=historyLog[historyLog.length-1];
     if(latest) sb.from('history').insert([{data:latest}]).catch(()=>{});
   },0);
-  },0);
 }
 
 let addMonthPending=null;
