@@ -2720,7 +2720,7 @@ function renderMonthEditor(ms){
   wrap.querySelectorAll('.mse-cell').forEach(cell=>{
     cell.addEventListener('click',()=>{
       const m=cell.dataset.month;
-      const cur=cell.dataset.status||'';
+      const cur=ms[m]||'';
       const idx=STATUS_CYCLE.indexOf(cur);
       if(idx===-1||idx===STATUS_CYCLE.length-1){
         // 空か完了 → 削除（空に戻す）
@@ -2738,12 +2738,6 @@ function renderMonthEditor(ms){
 
 function closeModal(){document.getElementById('editModal').style.display='none';}
 function saveTask(){
-  // タブ2のメモを保存
-  if(editingId){
-    const memo=document.getElementById('fmMemo').value;
-    if(!manuals[editingId])manuals[editingId]={urls:[],memo:'',comments:[]};
-    manuals[editingId].memo=memo;
-  }
   const cat=document.getElementById('fmCat').value.trim();
   const detail=document.getElementById('fmDetail').value.trim();
   if(!cat||!detail){alert('カテゴリと詳細は必須です');return;}
@@ -2763,8 +2757,9 @@ function saveTask(){
     tasks.push({id:nextId++,...data});
   }
   // 自分の更新を記録（リアルタイムで返ってきたときに無視）
-  const savedId=data.id||nextId-1;
+  const savedId=editingId!==null?editingId:nextId-1;
   _myRecentUpdates.add(savedId);
+  // fmMemoがない場合のエラー対策
   save(savedId);closeModal();rebuildFilters();
   if(currentTab==='schedule') renderKeepScroll(); else render();
 }
