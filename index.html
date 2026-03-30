@@ -2219,10 +2219,18 @@ function toggleMonthStatus(id, month){
     from: cur,
     to: next
   });
-  saveHistory();
-  save(id);
+  // まずDOMを即座に更新（ユーザーが遅延を感じない）
   patchScheduleRow(id);
   updateStats();
+  // Supabase保存は非同期で後から（UIをブロックしない）
+  setTimeout(()=>{
+    localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+    localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog.slice(-500)));
+    const t2=tasks.find(x=>x.id===id);
+    if(t2) sb.from('tasks').upsert([{id:t2.id,data:t2,updated_at:new Date().toISOString()}]).catch(()=>{});
+    const latest=historyLog[historyLog.length-1];
+    if(latest) sb.from('history').insert([{data:latest}]).catch(()=>{});
+  },0);
 }
 
 let addMonthPending=null;
