@@ -1580,6 +1580,7 @@ function renderSchedule(f){
   const detLeft=isMobile?(26+60)+'px':'194px';
   const assLeft=isMobile?(26+60+110)+'px':'434px';
   const assW=isMobile?'36px':'50px';
+  _assLeft=assLeft; _assW=assW;
 
 const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;font-size:12px;color:${m===NOW_MONTH?'var(--accent)':'#4a5568'};letter-spacing:.03em;font-weight:700;text-align:center;white-space:nowrap;border-bottom:2px solid var(--border);background:${m===HONBAN_MONTH?'#ffe066':m===NOW_MONTH?'#fff0eb':'#edf0f7'};${m===NOW_MONTH?'outline:2px solid var(--accent);outline-offset:-1px;':m===HONBAN_MONTH?'outline:2px solid #b38600;outline-offset:-1px;':''}">${m}${m===NOW_MONTH?' ◀':''}</th>`).join('');
 
@@ -2281,7 +2282,7 @@ function patchScheduleRow(id){
   row.querySelectorAll('td.sch-label').forEach(td=>{td.style.background=rowBg;});
   [...row.querySelectorAll('td')].forEach(td=>{
     const l=parseInt(td.style.left);
-    if(l===434||l===parseInt(assLeft||'434')){
+    if(l===parseInt(_assLeft)){
       td.style.background=rowBg;
       // 担当者名も更新
       if(!td.querySelector('select')){
@@ -2317,6 +2318,7 @@ function patchScheduleRow(id){
 /* スクロール位置を保ったまま再描画（ダブルrAFで確実に復元） */
 // スクロール位置をグローバルで保持
 let _savedScrollLeft=0, _savedScrollTop=0, _savedViewTop=0;
+let _assLeft="434px", _assW="50px";
 
 function saveScrollPos(){
   const o=document.getElementById('scheduleOuter');
