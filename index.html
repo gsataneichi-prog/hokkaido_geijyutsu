@@ -2347,10 +2347,21 @@ function restoreScrollPos(){
 }
 
 function renderKeepScroll(){
-  saveScrollPos();
+  const o=document.getElementById('scheduleOuter');
+  const v=document.getElementById('viewScroll');
+  const sx=o?o.scrollLeft:0;
+  const sy=o?o.scrollTop:0;
+  const vy=v?v.scrollTop:0;
   render();
-  // 100ms後に復元（DOM再構築完了を待つ）
-  requestAnimationFrame(()=>requestAnimationFrame(restoreScrollPos));
+  // 複数フレーム待って確実に復元
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      const o2=document.getElementById('scheduleOuter');
+      const v2=document.getElementById('viewScroll');
+      if(o2){o2.scrollLeft=sx;o2.scrollTop=sy;}
+      if(v2) v2.scrollTop=vy;
+    });
+  });
 }
 
 /* 担当者インライン変更 */
@@ -2718,7 +2729,10 @@ function saveTask(){
   }else{
     tasks.push({id:nextId++,...data});
   }
-  save();closeModal();rebuildFilters();
+  // 自分の更新を記録（リアルタイムで返ってきたときに無視）
+  const savedId=data.id||nextId-1;
+  _myRecentUpdates.add(savedId);
+  save(savedId);closeModal();rebuildFilters();
   if(currentTab==='schedule') renderKeepScroll(); else render();
 }
 
