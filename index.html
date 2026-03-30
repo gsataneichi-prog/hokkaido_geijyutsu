@@ -1684,7 +1684,7 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
         // 詳細・担当者セルの色：最初のステータス月の色を使う
         const allMIdx=MONTHS.map((m2,i2)=>ms[m2]?i2:-1).filter(i2=>i2>=0);
         const firstSt=allMIdx.length?ms[MONTHS[allMIdx[0]]]:'';
-        const rowBg=firstSt==='進行中'?'#5dcc8a':firstSt==='完了'?'#ffe066':'#fff';
+        const rowBg=firstSt==='進行中'?'#a8e6c1':firstSt==='完了'?'#ffe066':'#fff';
 
         // 詳細セル
         html+=`<td class="sch-label" style="position:sticky;left:${detLeft};z-index:15;width:${detW};min-width:${detW};vertical-align:middle;background:${rowBg}">
@@ -1715,7 +1715,7 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
           const allMonthIdxs=MONTHS.map((m2,i2)=>ms[m2]?i2:-1).filter(i2=>i2>=0);
           const nextStatusIdx=allMonthIdxs.find(i2=>i2>=mi);
           const nextSt=nextStatusIdx!==undefined?ms[MONTHS[nextStatusIdx]]:'';
-          const cellBg=nextSt==='進行中'?'#5dcc8a':nextSt==='完了'?'#ffe066':'';
+          const cellBg=nextSt==='進行中'?'#a8e6c1':nextSt==='完了'?'#ffe066':'';
           const isHonban=m==='9月(本番)';
 let cell=`<td class="sch-month-cell" data-month="${m}" style="text-align:center;padding:3px 2px;border-right:1px solid var(--border2);vertical-align:middle;min-width:72px;position:relative;z-index:0;background:${cellBg||(isHonban?'#ffe066':isNow?'rgba(232,93,38,.035)':'')}">`;
           if(hasStatus){
@@ -1883,7 +1883,7 @@ function renderHelp(){
       <h3 style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">🎨 ステータスの色</h3>
       <div style="display:flex;flex-wrap:wrap;gap:12px">
         <div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:16px;border-radius:4px;background:#fde8ec;border:1px solid #f5c0cb"></div><span style="font-size:12px">未着手</span></div>
-        <div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:16px;border-radius:4px;background:#5dcc8a"></div><span style="font-size:12px">進行中</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:16px;border-radius:4px;background:#a8e6c1"></div><span style="font-size:12px">進行中</span></div>
         <div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:16px;border-radius:4px;background:#ffe066"></div><span style="font-size:12px">完了</span></div>
         <div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:16px;border-radius:4px;background:#d63a55"></div><span style="font-size:12px;color:#d63a55;font-weight:700">⚠️ 遅延</span></div>
         <div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:16px;border-radius:4px;background:#ffe066;border:2px solid #b38600"></div><span style="font-size:12px">★ 本番月(9月)</span></div>
@@ -2288,7 +2288,7 @@ function patchScheduleRow(id){
   // 詳細・担当者セル：最初のステータス月の色
   const allMIdx=MONTHS.map((m2,i2)=>ms[m2]?i2:-1).filter(i2=>i2>=0);
   const firstSt=allMIdx.length?ms[MONTHS[allMIdx[0]]]:'';
-  const rowBg=firstSt==='進行中'?'#5dcc8a':firstSt==='完了'?'#ffe066':'#fff';
+  const rowBg=firstSt==='進行中'?'#a8e6c1':firstSt==='完了'?'#ffe066':'#fff';
 
   // 詳細・担当者セルは行全体ステータス色
   row.querySelectorAll('td.sch-label').forEach(td=>{td.style.background=rowBg;});
@@ -2331,7 +2331,7 @@ function patchScheduleRow(id){
     const isLate=st==='未'&&mIdx<nowIdx2;
     const nextIdx=allMIdx.find(i2=>i2>=mIdx);
     const nextSt=nextIdx!==undefined?ms[MONTHS[nextIdx]]:'';
-    const cellBg=isLate?'#fde8ec':(nextSt==='進行中'?'#5dcc8a':nextSt==='完了'?'#ffe066':(isHonban?'#ffe066':isNow?'rgba(232,93,38,.035)':''));
+    const cellBg=isLate?'#fde8ec':(nextSt==='進行中'?'#a8e6c1':nextSt==='完了'?'#ffe066':(isHonban?'#ffe066':isNow?'rgba(232,93,38,.035)':''));
     td.style.background=cellBg;
     if(st){
       const barClass=isLate?'late':scBar(st);
