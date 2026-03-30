@@ -1136,14 +1136,16 @@ function setupRealtimeSync(){
       setTimeout(()=>{if(_o1){_o1.scrollLeft=_sx1;_o1.scrollTop=_sy1;}},50);
     })
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'tasks'},payload=>{
-      console.log('UPDATE received:', payload);
+      console.log('UPDATE received:', payload.new?.data?.id);
       const newTask=payload.new?.data;
       if(!newTask){ console.log('no data'); return; }
+      console.log('myRecentUpdates has?', _myRecentUpdates.has(newTask.id), [..._myRecentUpdates]);
       if(_myRecentUpdates.has(newTask.id)){
         console.log('ignoring own update:', newTask.id);
         _myRecentUpdates.delete(newTask.id);
         return;
       }
+      console.log('processing update for id:', newTask.id, 'tab:', currentTab);
       const idx=tasks.findIndex(t=>t.id===newTask.id);
       if(idx>=0) tasks[idx]=newTask; else tasks.push(newTask);
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
