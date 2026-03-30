@@ -2756,21 +2756,17 @@ function saveTask(){
   }else{
     tasks.push({id:nextId++,...data});
   }
-  // URLも保存（タブ1に移動したので）
   const savedId=editingId!==null?editingId:nextId-1;
-  if(editingId!==null){
-    // manuals のURLを保持（削除しない）
-    if(!manuals[editingId]) manuals[editingId]={urls:[],memo:'',comments:[]};
-    localStorage.setItem('hf2026_manuals_v10',JSON.stringify(manuals));
-  }
-  // 自分の更新を記録（リアルタイムで返ってきたときに無視）
+  // 自分の更新を記録
   _myRecentUpdates.add(savedId);
-  // localStorageに即保存してからSupabaseへ
+  // toggleMonthStatusと同じ方式でSupabaseに保存
   localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-  const taskToSave=tasks.find(x=>x.id===savedId);
-  if(taskToSave){
-    sb.from('tasks').upsert([{id:taskToSave.id,data:taskToSave,updated_at:new Date().toISOString()}]).then(()=>{}).catch(e=>console.warn(e));
-  }
+  setTimeout(function(){
+    const taskToSave=tasks.find(function(x){return x.id===savedId;});
+    if(taskToSave){
+      sb.from('tasks').upsert([{id:taskToSave.id,data:taskToSave,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(){});
+    }
+  },0);
   closeModal();rebuildFilters();
   if(currentTab==='schedule') renderKeepScroll(); else render();
 }
