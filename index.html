@@ -2220,18 +2220,19 @@ function toggleMonthStatus(id, month){
     from: cur,
     to: next
   });
-  // 自分の更新を記録（リアルタイムで返ってきたときに無視）
+  // 自分の更新を記録
   _myRecentUpdates.add(id);
-  // まずDOMを即座に更新
+  // DOMを即座に更新
   patchScheduleRow(id);
-  setTimeout(()=>{
+  // 統計更新・保存は非同期で
+  setTimeout(function(){
     updateStats();
     localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
     localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog.slice(-500)));
-    const t2=tasks.find(x=>x.id===id);
-    if(t2) sb.from('tasks').upsert([{id:t2.id,data:t2,updated_at:new Date().toISOString()}]).catch(()=>{});
-    const latest=historyLog[historyLog.length-1];
-    if(latest) sb.from('history').insert([{data:latest}]).catch(()=>{});
+    var t2=tasks.find(function(x){return x.id===id;});
+    if(t2) sb.from('tasks').upsert([{id:t2.id,data:t2,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(){});
+    var latest=historyLog[historyLog.length-1];
+    if(latest) sb.from('history').insert([{data:latest}]).then(function(){}).catch(function(){});
   },0);
 }
 
