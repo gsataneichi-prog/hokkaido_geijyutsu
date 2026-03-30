@@ -1083,7 +1083,7 @@ async function loadHistoryFromSupabase(){
 }
 
 let tasks=JSON.parse(localStorage.getItem('hf2026_v10')||'null')||INIT.map(t=>(({...t,month_statuses:{...t.month_statuses}})));
-let assignees=JSON.parse(localStorage.getItem('hf2026_assignees_v8')||'null')||['中田','沼澤','伊藤','中山','大居','川内','三上','種市','悠跡','城木','加藤','中島','未定'];
+let assignees=JSON.parse(localStorage.getItem('hf2026_assignees_v9')||'null')||['中田','沼澤','伊藤','中山','大居','川内','三上','種市','悠跡','城木','加藤','中島','梅田','未定'];
 let manuals=JSON.parse(localStorage.getItem('hf2026_manuals_v10')||'{}');
 
 // Supabaseからデータを読み込む
@@ -1106,7 +1106,7 @@ async function loadFromSupabase(){
     const {data:aData}=await sb.from('assignees').select('*').order('id').limit(1);
     if(aData&&aData.length>0){
       assignees=aData[0].names;
-      localStorage.setItem('hf2026_assignees_v8',JSON.stringify(assignees));
+      localStorage.setItem('hf2026_assignees_v9',JSON.stringify(assignees));
     }
     rebuildFilters();
     render();
@@ -1124,11 +1124,13 @@ function setupRealtimeSync(){
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'tasks'},payload=>{
       const newTask=payload.new?.data;
       if(!newTask) return;
-      const idx=tasks.findIndex(t=>t.id===newTask.id);
-      if(idx>=0) tasks[idx]=newTask; else tasks.push(newTask);
+      const exists=tasks.find(t=>t.id===newTask.id);
+      if(!exists) tasks.push(newTask);
+      else tasks[tasks.findIndex(t=>t.id===newTask.id)]=newTask;
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-      rebuildFilters(); renderKeepScroll();
-      showSyncNotice('タスクが更新されました');
+      rebuildFilters();
+      renderKeepScroll();
+      showSyncNotice('新しいタスクが追加されました');
     })
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'tasks'},payload=>{
       const newTask=payload.new?.data;
@@ -1136,14 +1138,24 @@ function setupRealtimeSync(){
       const idx=tasks.findIndex(t=>t.id===newTask.id);
       if(idx>=0) tasks[idx]=newTask; else tasks.push(newTask);
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-      // 変更があった行だけ更新（全再描画しない）
-      if(currentTab==='schedule') patchScheduleRow(newTask.id);
+      // 変更があった行だけDOM更新（スクロール位置は一切変わらない）
+      if(currentTab==='schedule'){
+        patchScheduleRow(newTask.id);
+      } else {
+        render();
+      }
       updateStats();
       showSyncNotice('タスクが更新されました');
     })
     .on('postgres_changes',{event:'DELETE',schema:'public',table:'tasks'},payload=>{
       const delId=payload.old?.id;
-      if(delId){ tasks=tasks.filter(t=>t.id!==delId); renderKeepScroll(); }
+      if(delId){
+        tasks=tasks.filter(t=>t.id!==delId);
+        localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+        rebuildFilters();
+        renderKeepScroll();
+        showSyncNotice('タスクが削除されました');
+      }
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'manuals'},payload=>{
       const taskId=payload.new?.task_id;
@@ -1184,7 +1196,7 @@ let nextId=213;
 
 function save(changedTaskId=null){
   localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-  localStorage.setItem('hf2026_assignees_v8',JSON.stringify(assignees));
+  localStorage.setItem('hf2026_assignees_v9',JSON.stringify(assignees));
   localStorage.setItem('hf2026_manuals_v10',JSON.stringify(manuals));
   // Supabaseに非同期保存（変更したタスクのみ）
   saveToSupabase(changedTaskId);
@@ -2326,7 +2338,7 @@ function changeAssignee(id, sel){
   const t=tasks.find(x=>x.id===id);
   if(!t)return;
   t.assignee=sel.value;
-  save();
+  save(id);
   patchScheduleRow(id);
 }
 function cancelAssigneePicker(id, sel){
@@ -2691,8 +2703,12 @@ function openDel(id){
 }
 function closeConfirm(){document.getElementById('confirmModal').style.display='none';}
 function confirmDelete(){
-  tasks=tasks.filter(t=>t.id!==deleteId);
-  save();closeConfirm();rebuildFilters();
+  const idToDel=deleteId;
+  tasks=tasks.filter(t=>t.id!==idToDel);
+  localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+  // Supabaseから削除
+  sb.from('tasks').delete().eq('id',idToDel).then(()=>{}).catch(e=>console.warn('Delete failed:',e));
+  closeConfirm();rebuildFilters();
   if(currentTab==='schedule') renderKeepScroll(); else render();
 }
 
@@ -3006,13 +3022,13 @@ function importJSON(input){
       // 復元実行
       tasks=data.tasks||[];
       manuals=data.manuals||{};
-      assignees=data.assignees||['中田','沼澤','伊藤','中山','大居','川内','三上','種市','悠跡','城木','加藤','中島','未定'];
+      assignees=data.assignees||['中田','沼澤','伊藤','中山','大居','川内','三上','種市','悠跡','城木','加藤','中島','梅田','未定'];
       historyLog=data.historyLog||[];
       nextId=Math.max(0,...tasks.map(t=>t.id||0))+1;
 
       save();
       saveHistory();
-      localStorage.setItem('hf2026_assignees_v8', JSON.stringify(assignees));
+      localStorage.setItem('hf2026_assignees_v9', JSON.stringify(assignees));
 
       rebuildFilters();
       render();
