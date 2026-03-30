@@ -616,7 +616,15 @@ select option{background:#fff;}
   </div>
   <div class="form-group">
     <label class="form-label">詳細 *</label>
-    <textarea class="form-textarea" id="fmDetail" placeholder="●メインの作業内容&#10;・詳細項目1&#10;・詳細項目2&#10;【補足】&#10;※注意事項"></textarea>
+    <textarea class="form-textarea" id="fmDetail" placeholder="●メインの作業内容&#10;・詳細項目1&#10;・詳細項目2&#10;【補足】&#10;※注意事項" style="min-height:180px;height:180px"></textarea>
+  </div>
+  <div class="form-group">
+    <label class="form-label">🔗 マニュアル参照URL</label>
+    <div style="display:flex;gap:8px;margin-bottom:6px">
+      <input type="url" id="fmUrlInput" placeholder="https://... URLを入力" class="form-input" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addModalUrl()}">
+      <button class="btn btn-ghost btn-sm" onclick="addModalUrl()">＋ 追加</button>
+    </div>
+    <div id="fmUrlList"></div>
   </div>
   <div class="form-row">
     <div class="form-group">
@@ -635,6 +643,7 @@ select option{background:#fff;}
         <option value="城木">城木</option>
         <option value="加藤">加藤</option>
         <option value="中島">中島</option>
+        <option value="梅田">梅田</option>
         <option value="未定">未定</option>
         <option value="__other__">その他（自由入力）</option>
       </select>
@@ -655,33 +664,18 @@ select option{background:#fff;}
   </div>
   </div><!-- /tabPane1 -->
 
-  <!-- タブ2：コメント・メモ・URL -->
+  <!-- タブ2：コメント -->
   <div id="editTabPane2" style="display:none">
-    <!-- URL -->
-    <div class="form-group">
-      <label class="form-label">🔗 参照URL・マニュアル</label>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <input type="url" id="fmUrlInput" placeholder="https://... URLを入力してEnter" class="form-input" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addModalUrl()}">
-        <button class="btn btn-ghost btn-sm" onclick="addModalUrl()">＋ 追加</button>
-      </div>
-      <div id="fmUrlList"></div>
-    </div>
-    <!-- メモ -->
-    <div class="form-group">
-      <label class="form-label">📝 メモ・補足</label>
-      <textarea class="form-textarea" id="fmMemo" placeholder="手順のポイント、注意事項、連絡先など…" style="min-height:80px"></textarea>
-    </div>
-    <!-- コメント -->
     <div class="form-group">
       <label class="form-label">💬 コメント</label>
-      <div id="fmCommentList" style="margin-bottom:8px;max-height:160px;overflow-y:auto"></div>
+      <div id="fmCommentList" style="margin-bottom:8px;max-height:260px;overflow-y:auto"></div>
       <div style="display:flex;flex-direction:column;gap:6px">
         <div style="display:flex;gap:8px;align-items:center">
           <select id="fmCommentAuthor" class="form-select" style="width:auto;min-width:90px"></select>
           <span style="font-size:11px;color:var(--muted)">として投稿</span>
         </div>
         <div style="display:flex;gap:8px">
-          <input type="text" id="fmCommentInput" class="form-input" placeholder="コメントを入力…" >
+          <input type="text" id="fmCommentInput" class="form-input" placeholder="コメントを入力…">
           <button class="btn btn-ghost btn-sm" onclick="addModalComment()" style="color:var(--purple);border-color:var(--purple)">投稿</button>
         </div>
       </div>
@@ -1697,7 +1691,8 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
             </div>
           </div>
           <div class="sch-row-actions">
-            <button class="icon-btn${hasManual(t.id)||hasComment(t.id)?' manual':''}" onclick="openEditTab2(${t.id})" title="コメント・メモ・URL" style="${hasManual(t.id)||hasComment(t.id)?'color:var(--purple);border-color:var(--purple);background:var(--purple-light)':''}">💬${hasComment(t.id)?`<sup style="font-size:8px;color:#7c3aed">${commentCount(t.id)}</sup>`:''}</button>
+            <button class="icon-btn" onclick="openEdit(${t.id})" title="編集">✏️</button>
+            <button class="icon-btn${hasComment(t.id)?' manual':''}" onclick="openEditTab2(${t.id})" title="コメント" style="${hasComment(t.id)?'color:var(--purple);border-color:var(--purple);background:var(--purple-light)':''}">💬${hasComment(t.id)?`<sup style="font-size:8px;color:#7c3aed">${commentCount(t.id)}</sup>`:''}</button>
             <button class="icon-btn del" onclick="openDel(${t.id})" title="削除">🗑</button>
           </div>
         </td>`;
@@ -2574,7 +2569,7 @@ function openAddModal(){
 }
 function openEditTab2(id){
   openEdit(id);
-  setTimeout(()=>switchEditTab(1),50);
+  setTimeout(()=>switchEditTab(2),50);
 }
 function openEdit(id){
   saveScrollPos();
