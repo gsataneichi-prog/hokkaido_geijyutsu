@@ -1168,7 +1168,11 @@ function setupRealtimeSync(){
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'manuals'},payload=>{
       const taskId=payload.new?.task_id;
-      if(taskId){ manuals[taskId]=payload.new.data; updateCommentBadge(); }
+      if(taskId){
+        manuals[taskId]=payload.new.data;
+        updateCommentBadge();
+        if(currentTab==='schedule') patchScheduleRow(parseInt(taskId));
+      }
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'history'},payload=>{
       const h=payload.new?.data;
@@ -2299,6 +2303,21 @@ function patchScheduleRow(id){
     }
   });
 
+  // コメントボタンを更新（件数バッジ）
+  const actionDiv=row.querySelector('.sch-row-actions');
+  if(actionDiv){
+    const cnt=commentCount(t.id);
+    const hasCmt=cnt>0;
+    const btn=actionDiv.querySelector('.icon-btn:last-child');
+    if(btn){
+      btn.className='icon-btn'+(hasCmt?' manual':'');
+      btn.style.color=hasCmt?'var(--purple)':'';
+      btn.style.borderColor=hasCmt?'var(--purple)':'';
+      btn.style.background=hasCmt?'var(--purple-light)':'';
+      btn.innerHTML='💬'+(hasCmt?`<sup style="font-size:8px;color:#7c3aed">${cnt}</sup>`:'');
+    }
+  }
+
   // 月セルを data-month で確実に取得して色・ボタン更新
   row.querySelectorAll('td[data-month]').forEach(td=>{
     const m=td.dataset.month;
@@ -2532,9 +2551,10 @@ function addModalComment(){
   const now=new Date();
   const date=`${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   manuals[editingId].comments.push({author,text,date,ts:now.getTime()});
-  inp.value='';save();
+  inp.value='';save(null,'manual');
   renderModalComments(manuals[editingId].comments,editingId);
   updateCommentBadge();
+  if(currentTab==='schedule') patchScheduleRow(editingId);
 }
 
 let deleteCommentIdx=null;
