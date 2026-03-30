@@ -1123,7 +1123,7 @@ const _myRecentUpdates=new Set();
 
 // リアルタイム同期：他の人の変更を自動反映
 function setupRealtimeSync(){
-  sb.channel('realtime-all')
+  sb.channel('realtime-'+Math.random().toString(36).slice(2))
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'tasks'},payload=>{
       const newTask=payload.new?.data;
       if(!newTask) return;
