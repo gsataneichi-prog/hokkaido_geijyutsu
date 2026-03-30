@@ -1138,9 +1138,17 @@ function setupRealtimeSync(){
       const idx=tasks.findIndex(t=>t.id===newTask.id);
       if(idx>=0) tasks[idx]=newTask; else tasks.push(newTask);
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-      // 変更があった行だけDOM更新（スクロール位置は一切変わらない）
+      // 変更があった行だけDOM更新
       if(currentTab==='schedule'){
-        patchScheduleRow(newTask.id);
+        const oldTask=tasks[idx-1]||{};
+        // 大項目・小項目・詳細が変わった場合は全再描画が必要
+        if(oldTask.category!==newTask.category||
+           oldTask.subcategory!==newTask.subcategory||
+           oldTask.detail!==newTask.detail){
+          renderKeepScroll();
+        } else {
+          patchScheduleRow(newTask.id);
+        }
       } else {
         render();
       }
@@ -2272,7 +2280,15 @@ function patchScheduleRow(id){
   // 詳細・担当者セルは行全体ステータス色
   row.querySelectorAll('td.sch-label').forEach(td=>{td.style.background=rowBg;});
   [...row.querySelectorAll('td')].forEach(td=>{
-    if(td.style.left==='434px') td.style.background=rowBg;
+    const l=parseInt(td.style.left);
+    if(l===434||l===parseInt(assLeft||'434')){
+      td.style.background=rowBg;
+      // 担当者名も更新
+      if(!td.querySelector('select')){
+        td.textContent=t.assignee||'未定';
+        td.style.color=(t.assignee||'未定')==='未定'?'var(--blue)':'var(--text)';
+      }
+    }
   });
 
   // 月セルを data-month で確実に取得して色・ボタン更新
