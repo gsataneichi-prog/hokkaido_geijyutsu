@@ -1118,49 +1118,46 @@ async function loadFromSupabase(){
   }
 }
 
+// 自分が最近更新したタスクIDを記録（リアルタイムで自分に返ってきたものを無視）
+const _myRecentUpdates=new Set();
+
 // リアルタイム同期：他の人の変更を自動反映
 function setupRealtimeSync(){
   sb.channel('realtime-all')
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'tasks'},payload=>{
       const newTask=payload.new?.data;
       if(!newTask) return;
+      if(_myRecentUpdates.has(newTask.id)){
+        _myRecentUpdates.delete(newTask.id);
+        return;
+      }
       const exists=tasks.find(t=>t.id===newTask.id);
       if(!exists) tasks.push(newTask);
       else tasks[tasks.findIndex(t=>t.id===newTask.id)]=newTask;
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
       rebuildFilters();
-      // 他の人の変更→スクロール位置を強制保持
       const _o1=document.getElementById('scheduleOuter');
-      const _sx1=_o1?_o1.scrollLeft:0, _sy1=_o1?_o1.scrollTop:0;
+      const _sx1=_o1?_o1.scrollLeft:0,_sy1=_o1?_o1.scrollTop:0;
       render();
-      if(_o1){_o1.scrollLeft=_sx1;_o1.scrollTop=_sy1;}
-      showSyncNotice('新しいタスクが追加されました');
+      setTimeout(()=>{if(_o1){_o1.scrollLeft=_sx1;_o1.scrollTop=_sy1;}},50);
     })
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'tasks'},payload=>{
       const newTask=payload.new?.data;
       if(!newTask) return;
+      // 自分が更新したタスクは無視（二重処理防止）
+      if(_myRecentUpdates.has(newTask.id)){
+        _myRecentUpdates.delete(newTask.id);
+        return;
+      }
       const idx=tasks.findIndex(t=>t.id===newTask.id);
       if(idx>=0) tasks[idx]=newTask; else tasks.push(newTask);
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-      // 変更があった行だけDOM更新
       if(currentTab==='schedule'){
-        const oldTask=tasks[idx-1]||{};
-        // 大項目・小項目・詳細が変わった場合は全再描画（スクロール保持）
-        if(oldTask&&(oldTask.category!==newTask.category||
-           oldTask.subcategory!==newTask.subcategory||
-           oldTask.detail!==newTask.detail)){
-          const _o3=document.getElementById('scheduleOuter');
-          const _sx3=_o3?_o3.scrollLeft:0, _sy3=_o3?_o3.scrollTop:0;
-          render();
-          setTimeout(()=>{if(_o3){_o3.scrollLeft=_sx3;_o3.scrollTop=_sy3;}},50);
-        } else {
-          patchScheduleRow(newTask.id);
-        }
+        patchScheduleRow(newTask.id);
       } else {
         render();
       }
       updateStats();
-      showSyncNotice('タスクが更新されました');
     })
     .on('postgres_changes',{event:'DELETE',schema:'public',table:'tasks'},payload=>{
       const delId=payload.old?.id;
@@ -2223,9 +2220,10 @@ function toggleMonthStatus(id, month){
     from: cur,
     to: next
   });
-  // まずDOMを即座に更新（ユーザーが遅延を感じない）
+  // 自分の更新を記録（リアルタイムで返ってきたときに無視）
+  _myRecentUpdates.add(id);
+  // まずDOMを即座に更新
   patchScheduleRow(id);
-  // updateStatsも非同期で（UIをブロックしない）
   setTimeout(()=>{
     updateStats();
     localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
