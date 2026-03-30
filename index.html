@@ -1199,16 +1199,13 @@ function setupRealtimeSync(){
 }
 
 function showSyncNotice(msg){
-  let el=document.getElementById('syncNotice');
-  if(!el){
-    el=document.createElement('div');
-    el.id='syncNotice';
-    el.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a3a2a;color:#fff;padding:8px 18px;border-radius:20px;font-size:12px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none';
-    document.body.appendChild(el);
+  // syncDotを一瞬光らせるだけ（トースト通知は削除）
+  const dot=document.getElementById('syncDot');
+  if(dot){
+    dot.style.background='#22c55e';
+    dot.style.transform='scale(1.5)';
+    setTimeout(()=>{dot.style.transform='scale(1)';},300);
   }
-  el.textContent='🔄 '+msg;
-  el.style.opacity='1';
-  setTimeout(()=>el.style.opacity='0', 2500);
 }
 let nextId=213;
 
