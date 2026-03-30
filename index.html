@@ -1395,11 +1395,16 @@ function markAllRead(){
 
 function updateStats(){
   const tot=tasks.length;
-  const done=tasks.filter(t=>taskStatus(t)==='完了').length;
-  const wip=tasks.filter(t=>taskStatus(t)==='進行中').length;
-  const todo=tasks.filter(t=>taskStatus(t)==='未').length;
-  const due=tasks.filter(t=>isDueThisMonth(t)).length;
-  const overdue=tasks.filter(t=>isOverdue(t)).length;
+  let done=0,wip=0,todo=0,due=0,overdue=0;
+  // 1回のループで全部カウント
+  for(const t of tasks){
+    const st=taskStatus(t);
+    if(st==='完了') done++;
+    else if(st==='進行中') wip++;
+    else todo++;
+    if(isDueThisMonth(t)) due++;
+    if(isOverdue(t)) overdue++;
+  }
   document.getElementById('sTot').textContent=tot;
   document.getElementById('sDone').textContent=done;
   const wipEl=document.getElementById('sWip');if(wipEl)wipEl.textContent=wip;
@@ -1407,7 +1412,6 @@ function updateStats(){
   document.getElementById('sPct').textContent=tot?Math.round(done/tot*100):0;
   document.getElementById('sDue').textContent=due;
   document.getElementById('sOverdue').textContent=overdue;
-  // 遅延があれば点滅
   document.getElementById('sOverdue').style.animation=overdue?'pulse 1.2s infinite':'none';
   updateCommentBadge();
 }
@@ -2221,15 +2225,16 @@ function toggleMonthStatus(id, month){
   });
   // まずDOMを即座に更新（ユーザーが遅延を感じない）
   patchScheduleRow(id);
-  updateStats();
-  // Supabase保存は非同期で後から（UIをブロックしない）
+  // updateStatsも非同期で（UIをブロックしない）
   setTimeout(()=>{
+    updateStats();
     localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
     localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog.slice(-500)));
     const t2=tasks.find(x=>x.id===id);
     if(t2) sb.from('tasks').upsert([{id:t2.id,data:t2,updated_at:new Date().toISOString()}]).catch(()=>{});
     const latest=historyLog[historyLog.length-1];
     if(latest) sb.from('history').insert([{data:latest}]).catch(()=>{});
+  },0);
   },0);
 }
 
@@ -2391,7 +2396,7 @@ function toggleHeader(){
 
 function firework(){
   const colors=['#e85d26','#1a9e6e','#1d6fb8','#c97800','#d63a55','#6d40cc'];
-  for(let i=0;i<14;i++){
+  for(let i=0;i<6;i++){
     setTimeout(()=>{
       const el=document.createElement('div');
       el.className='fw-p';
