@@ -1198,40 +1198,34 @@ function setupRealtimeSync(){
     });
 }
 
-function showSyncNotice(msg){
-  // syncDotを一瞬光らせるだけ（トースト通知は削除）
-  const dot=document.getElementById('syncDot');
-  if(dot){
-    dot.style.background='#22c55e';
-    dot.style.transform='scale(1.5)';
-    setTimeout(()=>{dot.style.transform='scale(1)';},300);
-  }
-}
+function showSyncNotice(msg){}
 let nextId=213;
 
-function save(changedTaskId=null){
+function save(changedTaskId=null, changedType='task'){
   localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
   localStorage.setItem('hf2026_assignees_v9',JSON.stringify(assignees));
   localStorage.setItem('hf2026_manuals_v10',JSON.stringify(manuals));
-  // Supabaseに非同期保存（変更したタスクのみ）
-  saveToSupabase(changedTaskId);
+  // Supabaseに非同期保存（変更したものだけ）
+  saveToSupabase(changedTaskId, changedType);
 }
 
-async function saveToSupabase(changedTaskId=null){
+async function saveToSupabase(changedTaskId=null, changedType='task'){
   try{
-    if(changedTaskId){
-      // 変更があったタスクだけupsert
-      const t=tasks.find(x=>x.id===changedTaskId);
-      if(t) await sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]);
-    } else {
-      // 全タスクupsert（初回・インポート時）
-      await sb.from('tasks').upsert(tasks.map(t=>({id:t.id,data:t,updated_at:new Date().toISOString()})));
+    if(changedType==='task'||changedType==='all'){
+      if(changedTaskId){
+        const t=tasks.find(x=>x.id===changedTaskId);
+        if(t) sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(e=>console.warn(e));
+      } else {
+        sb.from('tasks').upsert(tasks.map(t=>({id:t.id,data:t,updated_at:new Date().toISOString()}))).then(()=>{}).catch(e=>console.warn(e));
+      }
     }
-    // メモ・コメントをupsert
-    const manualRows=Object.entries(manuals).map(([k,v])=>({task_id:parseInt(k),data:v,updated_at:new Date().toISOString()}));
-    if(manualRows.length) await sb.from('manuals').upsert(manualRows);
-    // 担当者をupsert
-    await sb.from('assignees').upsert([{id:1,names:assignees,updated_at:new Date().toISOString()}]);
+    if(changedType==='manual'||changedType==='all'){
+      const manualRows=Object.entries(manuals).map(([k,v])=>({task_id:parseInt(k),data:v,updated_at:new Date().toISOString()}));
+      if(manualRows.length) sb.from('manuals').upsert(manualRows).then(()=>{}).catch(e=>console.warn(e));
+    }
+    if(changedType==='assignees'||changedType==='all'){
+      sb.from('assignees').upsert([{id:1,names:assignees,updated_at:new Date().toISOString()}]).then(()=>{}).catch(e=>console.warn(e));
+    }
   }catch(e){
     console.warn('Supabase save failed:', e);
   }
@@ -2195,7 +2189,7 @@ function addAssignee(){
   const inp=document.getElementById('newAssigneeName');
   const name=inp.value.trim();
   if(!name||assignees.includes(name))return;
-  assignees.push(name);inp.value='';save();rebuildFilters();renderKeepScroll();
+  assignees.push(name);inp.value='';save(null,'assignees');rebuildFilters();renderKeepScroll();
 }
 function delAssignee(name){
   assignees=assignees.filter(a=>a!==name);save();render();
@@ -2345,7 +2339,7 @@ function renderKeepScroll(){
   saveScrollPos();
   render();
   // 100ms後に復元（DOM再構築完了を待つ）
-  setTimeout(restoreScrollPos, 100);
+  requestAnimationFrame(()=>requestAnimationFrame(restoreScrollPos));
 }
 
 /* 担当者インライン変更 */
@@ -2785,7 +2779,7 @@ function addComment(){
   const date=`${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   manuals[manualId].comments.push({author,text,date,ts:now.getTime()});
   inp.value='';
-  save();
+  save(null,'manual');
   renderComments(manuals[manualId].comments);
   updateCommentBadge();
 }
@@ -2824,7 +2818,7 @@ function saveManual(){
   if(!manualId)return;
   if(!manuals[manualId])manuals[manualId]={urls:[],memo:''};
   manuals[manualId].memo=document.getElementById('mmMemo').value;
-  save();
+  save(null,'manual');
   const n=document.getElementById('mmSavedNote');
   n.style.opacity='1';setTimeout(()=>n.style.opacity='0',1800);
 }
