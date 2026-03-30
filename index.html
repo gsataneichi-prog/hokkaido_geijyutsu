@@ -2464,16 +2464,20 @@ function switchEditTab(n){
   const saveBtn=document.getElementById('editSaveBtn');
   if(saveBtn) saveBtn.style.display=n===1?'':'none';
   if(n===2&&editingId) loadModalCommentPane(editingId);
+  if(n===1&&editingId){
+    const m=manuals[editingId]||{};
+    renderModalUrlList(m.urls||[],editingId);
+    const memoEl=document.getElementById('fmMemo');
+    if(memoEl) memoEl.value=m.memo||'';
+  }
 }
 
 function loadModalCommentPane(id){
   const m=manuals[id]||{};
-  renderModalUrlList(m.urls||[],id);
-  document.getElementById('fmMemo').value=m.memo||'';
   renderModalComments(m.comments||[],id);
   const t=tasks.find(x=>x.id===id);
   const sel=document.getElementById('fmCommentAuthor');
-  sel.innerHTML=assignees.filter(a=>a).map(a=>`<option value="${a}"${t&&a===t.assignee?' selected':''}>${a}</option>`).join('');
+  if(sel) sel.innerHTML=assignees.filter(a=>a).map(a=>`<option value="${a}"${t&&a===t.assignee?' selected':''}>${a}</option>`).join('');
   markTaskCommentsRead(id);
 }
 
@@ -2593,6 +2597,11 @@ function openEdit(id){
   document.getElementById('fmPriority').value=t.priority||'中';
   renderMonthEditor(t.month_statuses||{});
   switchEditTab(1);
+  // タブ1のURL一覧を読み込む
+  setTimeout(()=>{
+    const m=manuals[id]||{};
+    renderModalUrlList(m.urls||[],id);
+  },0);
   // タブ2ボタンにコメント件数バッジ
   const m=manuals[id]||{};
   const unreadCnt=getUnreadComments().filter(c=>c.taskId===id).length;
