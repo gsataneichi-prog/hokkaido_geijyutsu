@@ -2293,8 +2293,29 @@ function patchScheduleRow(id){
   const firstSt=allMIdx.length?ms[MONTHS[allMIdx[0]]]:'';
   const rowBg=firstSt==='進行中'?'#a8e6c1':firstSt==='完了'?'#ffe066':'#fff';
 
-  // 詳細・担当者セルは行全体ステータス色
-  row.querySelectorAll('td.sch-label').forEach(td=>{td.style.background=rowBg;});
+  // 詳細セルを更新（小項目・詳細・※マニュアル参照・※詳細有）
+  row.querySelectorAll('td.sch-label').forEach(td=>{
+    td.style.background=rowBg;
+    // 詳細テキストセルを更新
+    const detailDiv=td.querySelector('.sch-label-detail');
+    if(detailDiv){
+      detailDiv.innerHTML=formatBullet(bulletOnly(t.detail));
+      // ※マニュアル参照
+      let manualRef=td.querySelector('.manual-ref-link');
+      if(!manualRef){
+        manualRef=document.createElement('div');
+        manualRef.className='manual-ref-link';
+        detailDiv.after(manualRef);
+      }
+      manualRef.innerHTML='';
+      if(hasManualRef(t.detail)){
+        manualRef.innerHTML=`<div onclick="openManualRef(${t.id})" style="font-size:10px;color:var(--blue);text-align:left;margin-top:2px;cursor:pointer;text-decoration:underline;text-underline-offset:2px">※マニュアル参照</div>`;
+      }
+      if(hasExtraDetail(t.detail)){
+        manualRef.innerHTML+=`<div onclick="openEdit(${t.id})" style="font-size:10px;color:var(--red);text-align:left;margin-top:2px;cursor:pointer;text-decoration:underline;text-underline-offset:2px">※詳細有</div>`;
+      }
+    }
+  });
   [...row.querySelectorAll('td')].forEach(td=>{
     const l=parseInt(td.style.left);
     if(l===parseInt(_assLeft)){
