@@ -541,7 +541,7 @@ select option{background:#fff;}
   <div class="topbar-stats">
     <div id="sCommentBadge" onclick="showUnreadComments()" title="未読コメントを確認" style="display:none;cursor:pointer;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;box-shadow:0 0 0 3px rgba(124,58,237,.3),0 2px 8px rgba(124,58,237,.4);align-items:center;gap:6px;white-space:nowrap;flex-shrink:0">💬 <span id="sComment">0</span> 件の新着</div>
     <div class="stat" id="sCountdown" style="border-color:#b38600;background:#fffbeb;flex-shrink:0">🎆 本番まで <span class="n" id="sCountdownDays" style="color:#b38600">-</span> 日</div>
-    <div class="stat total"><span class="n" id="sTot">0</span> 総タスク</div>
+    <div class="stat total" style="cursor:pointer" onclick="setStatusFilter('')" title="全タスク表示（フィルター解除）"><span class="n" id="sTot">0</span> 総タスク</div>
     <div class="stat" style="cursor:pointer;border-color:#f5c0cb" onclick="setAlertFilter('due')" title="今月が期限のタスク"><span class="n" id="sDue" style="color:#e85d26">0</span> 今月期限</div>
     <div class="stat" style="cursor:pointer;border-color:#f5c0cb" onclick="setAlertFilter('overdue')" title="期限を過ぎた未着手タスク"><span class="n" id="sOverdue" style="color:#d63a55">0</span> ⚠️ 遅延</div>
     <div class="stat todo" style="cursor:pointer" onclick="setStatusFilter(statusFilter==='未'?'':'未')" title="未着手でフィルター"><span class="n" id="sTodo" style="color:#e85d26">0</span> 未着手</div>
