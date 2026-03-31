@@ -1117,6 +1117,9 @@ async function loadFromSupabase(){
       if(needsOrder) tasks.forEach((t,i)=>{if(t.sort_order===undefined)t.sort_order=i;});
       tasks.sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+      // nextIdを現在の最大ID+1に更新（重複防止）
+      const maxId=Math.max(...tasks.map(t=>t.id||0));
+      if(maxId>=nextId) nextId=maxId+1;
     }
     // メモ・コメント
     const {data:mData}=await sb.from('manuals').select('*');
@@ -1157,12 +1160,12 @@ function setupRealtimeSync(){
       const exists=tasks.find(t=>t.id===newTask.id);
       if(!exists) tasks.push(newTask);
       else tasks[tasks.findIndex(t=>t.id===newTask.id)]=newTask;
+      // nextIdを更新
+      if(newTask.id>=nextId) nextId=newTask.id+1;
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
       rebuildFilters();
-      const _o1=document.getElementById('scheduleOuter');
-      const _sx1=_o1?_o1.scrollLeft:0,_sy1=_o1?_o1.scrollTop:0;
-      render();
-      setTimeout(()=>{if(_o1){_o1.scrollLeft=_sx1;_o1.scrollTop=_sy1;}},50);
+      if(currentTab==='schedule') renderKeepScroll(); else render();
+      updateStats();
     })
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'tasks'},payload=>{
       console.log('UPDATE received:', payload.new?.data?.id);
@@ -2971,17 +2974,19 @@ function saveTask(){
     const i=tasks.findIndex(t=>t.id===editingId);
     if(i>=0)tasks[i]={...tasks[i],...data};
   }else{
-    tasks.push({id:nextId++,...data});
+    // sort_orderは現在の最大値+1にして末尾に追加
+    const maxOrder=tasks.length?Math.max(...tasks.map(t=>t.sort_order??0)):0;
+    tasks.push({id:nextId++,...data,sort_order:maxOrder+1});
   }
   const savedId=editingId!==null?editingId:nextId-1;
   // 自分の更新を記録
   _myRecentUpdates.add(savedId);
-  // toggleMonthStatusと同じ方式でSupabaseに保存
+  // Supabaseに保存
   localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
   setTimeout(function(){
     const taskToSave=tasks.find(function(x){return x.id===savedId;});
     if(taskToSave){
-      sb.from('tasks').upsert([{id:taskToSave.id,data:taskToSave,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(){});
+      sb.from('tasks').upsert([{id:taskToSave.id,data:taskToSave,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(e){console.warn('save failed',e);});
     }
   },0);
   closeModal();rebuildFilters();
