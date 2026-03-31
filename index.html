@@ -3081,7 +3081,6 @@ function confirmDelete(){
   const idToDel=deleteId;
   tasks=tasks.filter(t=>t.id!==idToDel);
   localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-  // Supabaseから削除
   sb.from('tasks').delete().eq('id',idToDel).then(()=>{}).catch(e=>console.warn('Delete failed:',e));
   closeConfirm();rebuildFilters();
   if(currentTab==='schedule') renderKeepScroll(); else render();
