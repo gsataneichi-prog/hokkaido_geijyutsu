@@ -269,19 +269,44 @@ select option{background:#fff;}
 
 /* ── Schedule row actions ── */
 .sch-row{position:relative;}
-.sch-label:hover .sch-row-actions{opacity:1;pointer-events:all;}
 .sch-row-actions{
   position:absolute;right:4px;top:50%;transform:translateY(-50%);
-  display:flex;gap:3px;
   opacity:0;pointer-events:none;
   transition:opacity .15s;
-  z-index:10;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:8px;
-  padding:3px;
-  box-shadow:var(--shadow-md);
+  z-index:20;
 }
+.sch-label:hover .sch-row-actions{opacity:1;pointer-events:all;}
+.sch-action-btn{
+  width:24px;height:24px;border-radius:6px;border:1px solid var(--border);
+  background:var(--surface);cursor:pointer;font-size:14px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-md);
+  color:var(--text2);
+  transition:background .15s;
+}
+.sch-action-btn:hover{background:var(--accent-light);border-color:var(--accent);}
+.sch-action-menu{
+  position:fixed;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  box-shadow:var(--shadow-md);
+  min-width:130px;
+  display:none;
+  z-index:9999;
+  overflow:hidden;
+}
+.sch-action-menu.open{display:block;}
+.sch-action-menu button{
+  display:flex;align-items:center;gap:8px;
+  width:100%;padding:9px 14px;
+  border:none;background:transparent;
+  font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;
+  font-size:12px;color:var(--text);cursor:pointer;text-align:left;
+  transition:background .12s;white-space:nowrap;
+}
+.sch-action-menu button:hover{background:var(--accent-light);color:var(--accent);}
+.sch-action-menu button.danger{color:var(--red);}
+.sch-action-menu button.danger:hover{background:var(--red-light);}
+.sch-action-menu hr{margin:3px 10px;border:none;border-top:1px solid var(--border);}
 .sch-label{position:relative;}
 .sch-row{position:relative;}
 .sch-row>td:last-child{position:relative;}
@@ -1154,7 +1179,12 @@ function setupRealtimeSync(){
       if(idx>=0) tasks[idx]=newTask; else tasks.push(newTask);
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
       if(currentTab==='schedule'){
-        patchScheduleRow(newTask.id);
+        // sort_orderが変わった可能性がある場合はdebounceで並べ直し
+        if(newTask.sort_order!==undefined){
+          _scheduleReorderDebounce();
+        } else {
+          patchScheduleRow(newTask.id);
+        }
       } else {
         render();
       }
@@ -1686,8 +1716,8 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
           const isLastSub = (sub === (subGroups[subGroups.length-1]?.sub||''));
           html+=`<td rowspan="${subRowspan}" class="sch-sub-cell" data-sub="${sub.replace(/"/g,'&quot;')}" data-cat="${cat.replace(/"/g,'&quot;')}" style="vertical-align:middle;border-right:2px solid #b0b8c8;${isLastSub?CAT_BORDER:'border-bottom:1px solid var(--border2)'};position:sticky;left:${catW};z-index:15;background:${cc(cat)}12;width:${subW};min-width:${subW};padding:${isMobile?'3px 4px':'6px 8px'};text-align:center;box-shadow:2px 0 0 #b0b8c8">
             <div class="sub-move-btns" style="display:none;justify-content:center;gap:2px;margin-bottom:3px">
-              <button onclick="moveSubGroup('${sub.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}','up')" style="font-size:10px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;line-height:1" title="上へ">↑</button>
-              <button onclick="moveSubGroup('${sub.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}','down')" style="font-size:10px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;line-height:1" title="下へ">↓</button>
+              <button class="sub-up-btn" style="font-size:10px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;line-height:1" title="上へ">↑</button>
+              <button class="sub-dn-btn" style="font-size:10px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;line-height:1" title="下へ">↓</button>
             </div>
             <div style="font-size:11px;font-weight:700;color:var(--text);line-height:1.55;white-space:pre-line;word-break:break-all">${formatSubcategory(sub)}</div>
           </td>`;
@@ -1708,11 +1738,7 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
             </div>
           </div>
           <div class="sch-row-actions">
-            <button class="icon-btn" onclick="moveRow(${t.id},'up')" title="上へ移動">↑</button>
-            <button class="icon-btn" onclick="moveRow(${t.id},'down')" title="下へ移動">↓</button>
-            <button class="icon-btn" onclick="openEdit(${t.id})" title="編集">✏️</button>
-            <button class="icon-btn${hasComment(t.id)?' manual':''}" onclick="openEditTab2(${t.id})" title="コメント" style="${hasComment(t.id)?'color:var(--purple);border-color:var(--purple);background:var(--purple-light)':''}">💬${hasComment(t.id)?`<sup style="font-size:8px;color:#7c3aed">${commentCount(t.id)}</sup>`:''}</button>
-            <button class="icon-btn del" onclick="openDel(${t.id})" title="削除">🗑</button>
+            <button class="sch-action-btn" onclick="toggleRowMenu(event,${t.id})" title="操作メニュー">☰</button>
           </div>
         </td>`;
 
@@ -2457,7 +2483,10 @@ function moveSubGroup(sub, cat, dir){
 
   tasks.forEach((t,i)=>{ t.sort_order=i; });
   localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-  newCatPart.forEach(t=>{ sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{}); });
+  newCatPart.forEach(t=>{
+    _myRecentUpdates.add(t.id);
+    sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
+  });
   renderKeepScroll();
 }
 
@@ -2475,8 +2504,78 @@ function moveRow(id, dir){
   tasks[ti]=swap; tasks[si]=t;
   tasks.forEach((x,i)=>{ x.sort_order=i; });
   localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-  [t,swap].forEach(x=>{ sb.from('tasks').upsert([{id:x.id,data:x,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{}); });
+  [t,swap].forEach(x=>{
+    _myRecentUpdates.add(x.id);
+    sb.from('tasks').upsert([{id:x.id,data:x,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
+  });
   renderKeepScroll();
+}
+
+// sort_order変更を受け取ったとき、少し待ってからまとめて並べ直す（debounce）
+let _reorderTimer=null;
+function _scheduleReorderDebounce(){
+  if(_reorderTimer) clearTimeout(_reorderTimer);
+  _reorderTimer=setTimeout(()=>{
+    tasks.sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
+    localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+    renderKeepScroll();
+    _reorderTimer=null;
+  },400);
+}
+
+// ☰ メニュー開閉（body直下の共通メニューを使う）
+let _rowMenuId=null;
+function toggleRowMenu(e, id){
+  e.stopPropagation();
+  const menu=document.getElementById('globalRowMenu');
+  if(!menu) return;
+  if(_rowMenuId===id){ closeRowMenus(); return; }
+  closeRowMenus();
+  _rowMenuId=id;
+
+  const cmtCount=commentCount(id);
+  document.getElementById('grm-edit').onclick=()=>{ closeRowMenus(); openEdit(id); };
+  const cb=document.getElementById('grm-comment');
+  cb.textContent='💬 コメント'+(cmtCount?' ('+cmtCount+')':'');
+  cb.style.color=cmtCount?'var(--purple)':'';
+  cb.onclick=()=>{ closeRowMenus(); openEditTab2(id); };
+  document.getElementById('grm-up').onclick=()=>{ closeRowMenus(); confirmMoveRow(id,'up'); };
+  document.getElementById('grm-down').onclick=()=>{ closeRowMenus(); confirmMoveRow(id,'down'); };
+  document.getElementById('grm-del').onclick=()=>{ closeRowMenus(); openDel(id); };
+
+  const btn=e.currentTarget;
+  const rect=btn.getBoundingClientRect();
+  menu.style.display='block';
+  const mw=menu.offsetWidth;
+  const mh=menu.offsetHeight;
+  let left=rect.left;
+  let top=rect.bottom+4;
+  if(left+mw>window.innerWidth-8) left=window.innerWidth-mw-8;
+  if(top+mh>window.innerHeight-8) top=rect.top-mh-4;
+  menu.style.left=left+'px';
+  menu.style.top=top+'px';
+}
+function closeRowMenus(){
+  const m=document.getElementById('globalRowMenu');
+  if(m) m.style.display='none';
+  _rowMenuId=null;
+}
+document.addEventListener('click', closeRowMenus);
+
+// 確認付き行移動
+function confirmMoveRow(id, dir){
+  const t=tasks.find(x=>x.id===id);
+  if(!t) return;
+  const label=dir==='up'?'上':'下';
+  if(!confirm(`この行を${label}に移動してもよいですか？`)) return;
+  moveRow(id, dir);
+}
+
+// 確認付き小項目グループ移動
+function confirmMoveSubGroup(sub, cat, dir){
+  const label=dir==='up'?'上':'下';
+  if(!confirm(`「${sub}」グループを${label}に移動してもよいですか？`)) return;
+  moveSubGroup(sub, cat, dir);
 }
 
 // 小項目セルにホバーで↑↓を表示・ボタンにイベント登録
@@ -2488,8 +2587,8 @@ function initSubMoveBtns(){
     const cat=td.dataset.cat;
     const upBtn=td.querySelector('.sub-up-btn');
     const dnBtn=td.querySelector('.sub-dn-btn');
-    if(upBtn) upBtn.addEventListener('click',e=>{ e.stopPropagation(); moveSubGroup(sub,cat,'up'); });
-    if(dnBtn) dnBtn.addEventListener('click',e=>{ e.stopPropagation(); moveSubGroup(sub,cat,'down'); });
+    if(upBtn) upBtn.addEventListener('click',e=>{ e.stopPropagation(); confirmMoveSubGroup(sub,cat,'up'); });
+    if(dnBtn) dnBtn.addEventListener('click',e=>{ e.stopPropagation(); confirmMoveSubGroup(sub,cat,'down'); });
     td.addEventListener('mouseenter',()=>{ btns.style.display='flex'; });
     td.addEventListener('mouseleave',()=>{ btns.style.display='none'; });
   });
@@ -3320,5 +3419,15 @@ rebuildFilters();updateStats();render();
 loadFromSupabase();
 
 </script>
+<!-- 共通フローティングメニュー -->
+<div id="globalRowMenu" class="sch-action-menu" style="display:none">
+  <button id="grm-edit">✏️ 編集</button>
+  <button id="grm-comment">💬 コメント</button>
+  <hr>
+  <button id="grm-up">↑ 上へ移動</button>
+  <button id="grm-down">↓ 下へ移動</button>
+  <hr>
+  <button id="grm-del" class="danger">🗑️ 削除</button>
+</div>
 </body>
 </html>
