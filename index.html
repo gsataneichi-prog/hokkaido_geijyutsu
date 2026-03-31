@@ -241,6 +241,9 @@ select option{background:#fff;}
 .sch-grp span.grp-prog{font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;font-size:10px;color:var(--muted);margin-left:12px;font-weight:400;}
 .sch-row td{padding:0;border-bottom:1px solid var(--border2);}
 .sch-row.sub-inner td:not(.sch-cat-cell):not(.sch-sub-cell){border-bottom:1px dashed var(--border2)!important;}
+.sub-rename-input{width:100%;font-size:12px;font-weight:700;color:var(--text);border:1.5px solid var(--accent);border-radius:4px;padding:2px 4px;text-align:center;font-family:inherit;background:#fff;box-sizing:border-box;outline:none;}
+.sub-label-text{cursor:pointer;}
+.sub-label-text:hover{text-decoration:underline;text-decoration-style:dashed;text-underline-offset:2px;}
 .sch-label{padding:0 10px 0 14px;width:310px;min-width:310px;position:sticky;left:0;z-index:2;background:var(--surface);border-right:1px solid var(--border2);cursor:pointer;transition:background .15s;vertical-align:top;}
 .sch-label:hover{background:inherit!important;}
 .sch-label-inner{padding:7px 0;display:flex;flex-direction:column;gap:2px;}
@@ -1722,7 +1725,7 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
               <button class="sub-up-btn" style="font-size:10px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;line-height:1" title="上へ">↑</button>
               <button class="sub-dn-btn" style="font-size:10px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;line-height:1" title="下へ">↓</button>
             </div>
-            <div style="font-size:13px;font-weight:700;color:var(--text);line-height:1.55;white-space:pre-line;word-break:break-all">${formatSubcategory(sub)}</div>
+            <div class="sub-label-text" onclick="startSubRename(event,this.closest('.sch-sub-cell'))" style="font-size:13px;font-weight:700;color:var(--text);line-height:1.55;white-space:pre-line;word-break:break-all" title="クリックで小項目名を変更">${formatSubcategory(sub)}</div>
           </td>`;
           subFirst=false;
         }
@@ -2624,6 +2627,58 @@ function confirmMoveSubGroup(sub, cat, dir){
 }
 
 // 小項目セルにホバーで↑↓を表示・ボタンにイベント登録
+function startSubRename(e, td){
+  e.stopPropagation();
+  if(!td) return;
+  const oldSub=td.dataset.sub;
+  const cat=td.dataset.cat;
+  const labelDiv=td.querySelector('.sub-label-text');
+  if(!labelDiv||td.querySelector('.sub-rename-input')) return;
+
+  const inp=document.createElement('input');
+  inp.className='sub-rename-input';
+  inp.value=oldSub;
+  labelDiv.style.display='none';
+  // ↑↓ボタンも非表示
+  const moveBtns=td.querySelector('.sub-move-btns');
+  if(moveBtns) moveBtns.style.display='none';
+  labelDiv.after(inp);
+  inp.focus(); inp.select();
+
+  let committed=false;
+  function commit(){
+    if(committed) return;
+    committed=true;
+    const newSub=inp.value.trim();
+    inp.remove();
+    if(newSub && newSub!==oldSub){
+      // 同じcat+subの全タスクを一括リネーム
+      const affected=tasks.filter(t=>t.category===cat&&t.subcategory===oldSub);
+      affected.forEach(t=>{ t.subcategory=newSub; });
+      localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+      // Supabase保存
+      affected.forEach(t=>{
+        _myRecentUpdates.add(t.id);
+        sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
+      });
+      // 履歴
+      const latest={ts:Date.now(),taskId:affected[0]?.id,action:'小項目リネーム',detail:`「${oldSub}」→「${newSub}」`,user:'自分'};
+      historyLog.push(latest);
+      localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog));
+      sb.from('history').insert([{data:latest}]).then(()=>{}).catch(()=>{});
+      renderKeepScroll();
+    } else {
+      labelDiv.style.display='';
+      if(moveBtns) moveBtns.style.display='';
+    }
+  }
+  inp.addEventListener('keydown',e2=>{
+    if(e2.key==='Enter'){ e2.preventDefault(); commit(); }
+    if(e2.key==='Escape'){ committed=true; inp.remove(); labelDiv.style.display=''; if(moveBtns) moveBtns.style.display=''; }
+  });
+  inp.addEventListener('blur',commit);
+}
+
 function initSubMoveBtns(){
   document.querySelectorAll('td.sch-sub-cell').forEach(td=>{
     const btns=td.querySelector('.sub-move-btns');
@@ -3024,9 +3079,30 @@ function saveTask(){
     month_statuses:{...ms},
     priority:document.getElementById('fmPriority').value
   };
+  let subGroupChanged=false;
   if(editingId!==null){
     const i=tasks.findIndex(t=>t.id===editingId);
-    if(i>=0)tasks[i]={...tasks[i],...data};
+    if(i>=0){
+      const oldSub=tasks[i].subcategory;
+      const oldCat=tasks[i].category;
+      tasks[i]={...tasks[i],...data};
+      // 小項目または大項目が変わった場合 → 新グループの末尾にsort_orderを付け替え
+      if(data.subcategory!==oldSub||data.category!==oldCat){
+        subGroupChanged=true;
+        const sameSub=tasks.filter(t=>t.id!==editingId&&t.category===data.category&&t.subcategory===data.subcategory);
+        let newOrder;
+        if(sameSub.length>0){
+          newOrder=Math.max(...sameSub.map(t=>t.sort_order??0))+0.5;
+        } else {
+          const sameCat=tasks.filter(t=>t.id!==editingId&&t.category===data.category);
+          newOrder=sameCat.length>0?Math.max(...sameCat.map(t=>t.sort_order??0))+0.5
+            :Math.max(...tasks.map(t=>t.sort_order??0),0)+0.5;
+        }
+        tasks[i].sort_order=newOrder;
+        tasks.sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
+        tasks.forEach((t,idx)=>{t.sort_order=idx;});
+      }
+    }
   }else{
     // 同じ大項目・小項目の最後のタスクの直後に挿入する
     const sameSub=tasks.filter(t=>t.category===cat&&t.subcategory===subcategory);
@@ -3054,10 +3130,18 @@ function saveTask(){
   localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
   setTimeout(function(){
     if(editingId!==null){
-      // 編集の場合は変更タスクだけ保存
-      const taskToSave=tasks.find(function(x){return x.id===savedId;});
-      if(taskToSave){
-        sb.from('tasks').upsert([{id:taskToSave.id,data:taskToSave,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(e){console.warn('save failed',e);});
+      if(subGroupChanged){
+        // 小項目が変わった場合はsort_orderが全タスクで変わるので全保存
+        tasks.forEach(function(t){
+          _myRecentUpdates.add(t.id);
+          sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(e){console.warn('save failed',e);});
+        });
+      } else {
+        // 編集の場合は変更タスクだけ保存
+        const taskToSave=tasks.find(function(x){return x.id===savedId;});
+        if(taskToSave){
+          sb.from('tasks').upsert([{id:taskToSave.id,data:taskToSave,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(e){console.warn('save failed',e);});
+        }
       }
     } else {
       // 新規追加の場合はsort_orderが変わった全タスクを保存
