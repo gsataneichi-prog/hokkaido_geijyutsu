@@ -1087,6 +1087,10 @@ async function loadFromSupabase(){
     const {data:tData}=await sb.from('tasks').select('*').order('id');
     if(tData&&tData.length>0){
       tasks=tData.map(r=>r.data);
+      // sort_orderが未設定のタスクに順番を付ける
+      let needsOrder=tasks.some(t=>t.sort_order===undefined);
+      if(needsOrder) tasks.forEach((t,i)=>{if(t.sort_order===undefined)t.sort_order=i;});
+      tasks.sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
     }
     // メモ・コメント
@@ -1489,7 +1493,7 @@ function render(){
   const vc=document.getElementById('viewContent');
   const vs=document.getElementById('viewScroll');
   if(currentTab==='card'){vs.className='view-scroll';vc.className='';vc.innerHTML=renderCard(f);}
-  else if(currentTab==='schedule'){vs.className='view-scroll schedule-mode';vc.className='schedule-content';vc.innerHTML=renderSchedule(f);initScheduleFeatures();}
+  else if(currentTab==='schedule'){vs.className='view-scroll schedule-mode';vc.className='schedule-content';vc.innerHTML=renderSchedule(f);initScheduleFeatures();initDragDrop();}
   else if(currentTab==='category'){vs.className='view-scroll';vc.className='';vc.innerHTML=renderCategory(f);}
   else if(currentTab==='assignee'){vs.className='view-scroll';vc.className='';vc.innerHTML=renderAssignee();}
   else if(currentTab==='heatmap'){vs.className='view-scroll';vc.className='';vc.innerHTML=renderHeatmap();}
@@ -1576,6 +1580,8 @@ function initScheduleFeatures(){
 
 function renderSchedule(f){
   if(!f.length)return empty();
+  // sort_order順に並べ替え
+  f=[...f].sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
   const isMobile=window.innerWidth<=768;
   const catW=isMobile?'26px':'44px';
   const subW=isMobile?'60px':'150px';
@@ -1692,6 +1698,7 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
         // 詳細セル
         html+=`<td class="sch-label" style="position:sticky;left:${detLeft};z-index:15;width:${detW};min-width:${detW};vertical-align:middle;background:${rowBg}">
           <div class="sch-label-wrap">
+            <div class="drag-handle" title="ドラッグで並べ替え">⠿</div>
             <div class="sch-label-inner" style="flex:1;padding:5px 4px 5px 0">
               <div class="sch-label-detail">${formatBullet(bulletOnly(t.detail))}</div>
               <div class="manual-ref-link">${hasManualRef(t.detail)?`<div onclick="openManualRef(${t.id})" style="font-size:10px;color:var(--blue);text-align:left;margin-top:2px;cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="クリックでリンクを開く">※マニュアル参照</div>`:''}${hasExtraDetail(t.detail)?`<div onclick="openEdit(${t.id})" style="font-size:10px;color:var(--red);text-align:left;margin-top:2px;cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="クリックで詳細を確認">※詳細有</div>`:''}</div>
@@ -2398,6 +2405,72 @@ function renderKeepScroll(){
       const v2=document.getElementById('viewScroll');
       if(o2){o2.scrollLeft=sx;o2.scrollTop=sy;}
       if(v2) v2.scrollTop=vy;
+    });
+  });
+}
+
+/* ═══════════════ DRAG & DROP 並べ替え ═══════════════ */
+function initDragDrop(){
+  let dragId=null;
+  let dragCat=null;
+
+  document.querySelectorAll('tr[data-id]').forEach(tr=>{
+    tr.setAttribute('draggable','true');
+
+    tr.addEventListener('dragstart',e=>{
+      dragId=parseInt(tr.dataset.id);
+      const t=tasks.find(x=>x.id===dragId);
+      dragCat=t?.category;
+      tr.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',String(dragId));
+    });
+
+    tr.addEventListener('dragend',()=>{
+      tr.classList.remove('dragging');
+      document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
+      dragId=null; dragCat=null;
+    });
+
+    tr.addEventListener('dragover',e=>{
+      e.preventDefault();
+      const overId=parseInt(tr.dataset.id);
+      if(overId===dragId) return;
+      const overTask=tasks.find(x=>x.id===overId);
+      if(overTask?.category!==dragCat) return;
+      document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
+      tr.classList.add('drag-over');
+    });
+
+    tr.addEventListener('dragleave',()=>{ tr.classList.remove('drag-over'); });
+
+    tr.addEventListener('drop',e=>{
+      e.preventDefault();
+      const dropId=parseInt(tr.dataset.id);
+      if(dropId===dragId||!dragId) return;
+      const dragTask=tasks.find(x=>x.id===dragId);
+      const dropTask=tasks.find(x=>x.id===dropId);
+      if(!dragTask||!dropTask||dragTask.category!==dropTask.category) return;
+
+      // tasksの配列内でdragTaskをdropTaskの前に移動
+      const dragIdx=tasks.indexOf(dragTask);
+      tasks.splice(dragIdx,1);
+      const newDropIdx=tasks.indexOf(dropTask);
+      tasks.splice(newDropIdx,0,dragTask);
+
+      // 全タスクにsort_orderを振り直す
+      tasks.forEach((t,i)=>{ t.sort_order=i; });
+
+      // ローカル保存
+      localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+
+      // Supabase：同じカテゴリのタスクだけ更新
+      const catTasks=tasks.filter(t=>t.category===dragTask.category);
+      catTasks.forEach(t=>{
+        sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).catch(err=>console.warn(err));
+      });
+
+      renderKeepScroll();
     });
   });
 }
