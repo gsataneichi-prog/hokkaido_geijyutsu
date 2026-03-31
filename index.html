@@ -1694,8 +1694,7 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
           <div class="sch-label-wrap">
             <div class="sch-label-inner" style="flex:1;padding:5px 4px 5px 0">
               <div class="sch-label-detail">${formatBullet(bulletOnly(t.detail))}</div>
-              ${hasManualRef(t.detail)?`<div onclick="openManualRef(${t.id})" style="font-size:10px;color:var(--blue);text-align:left;margin-top:2px;cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="クリックでリンクを開く">※マニュアル参照</div>`:''}
-              ${hasExtraDetail(t.detail)?`<div onclick="openEdit(${t.id})" style="font-size:10px;color:var(--red);text-align:left;margin-top:2px;cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="クリックで詳細を確認">※詳細有</div>`:''}
+              <div class="manual-ref-link">${hasManualRef(t.detail)?`<div onclick="openManualRef(${t.id})" style="font-size:10px;color:var(--blue);text-align:left;margin-top:2px;cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="クリックでリンクを開く">※マニュアル参照</div>`:''}${hasExtraDetail(t.detail)?`<div onclick="openEdit(${t.id})" style="font-size:10px;color:var(--red);text-align:left;margin-top:2px;cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="クリックで詳細を確認">※詳細有</div>`:''}</div>
             </div>
           </div>
           <div class="sch-row-actions">
