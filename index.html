@@ -241,7 +241,7 @@ select option{background:#fff;}
 .sch-grp span.grp-prog{font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;font-size:10px;color:var(--muted);margin-left:12px;font-weight:400;}
 .sch-row td{padding:0;border-bottom:1px solid var(--border2);}
 .sch-row.sub-inner td:not(.sch-cat-cell):not(.sch-sub-cell){border-bottom:1px dashed var(--border2)!important;}
-.sub-rename-input{width:100%;font-size:12px;font-weight:700;color:var(--text);border:1.5px solid var(--accent);border-radius:4px;padding:2px 4px;text-align:center;font-family:inherit;background:#fff;box-sizing:border-box;outline:none;}
+.sub-rename-input{width:100%;font-size:12px;font-weight:700;color:var(--text);border:1.5px solid var(--accent);border-radius:4px;padding:4px 6px;text-align:center;font-family:inherit;background:#fff;box-sizing:border-box;outline:none;display:block;min-height:36px;}
 .sub-label-text{cursor:pointer;}
 .sub-label-text:hover{text-decoration:underline;text-decoration-style:dashed;text-underline-offset:2px;}
 .sch-label{padding:0 10px 0 14px;width:310px;min-width:310px;position:sticky;left:0;z-index:2;background:var(--surface);border-right:1px solid var(--border2);cursor:pointer;transition:background .15s;vertical-align:top;}
@@ -2635,15 +2635,23 @@ function startSubRename(e, td){
   const labelDiv=td.querySelector('.sub-label-text');
   if(!labelDiv||td.querySelector('.sub-rename-input')) return;
 
-  const inp=document.createElement('input');
+  const inp=document.createElement('textarea');
   inp.className='sub-rename-input';
   inp.value=oldSub;
+  inp.rows=3;
+  inp.placeholder='Shift+Enterで改行\nEnterで確定';
+  inp.style.resize='none';
+  inp.style.lineHeight='1.5';
   labelDiv.style.display='none';
   // ↑↓ボタンも非表示
   const moveBtns=td.querySelector('.sub-move-btns');
   if(moveBtns) moveBtns.style.display='none';
   labelDiv.after(inp);
+  // 行数に応じて自動リサイズ
+  function autoResize(){ inp.style.height='auto'; inp.style.height=inp.scrollHeight+'px'; }
+  inp.addEventListener('input', autoResize);
   inp.focus(); inp.select();
+  autoResize();
 
   let committed=false;
   function commit(){
@@ -2673,7 +2681,7 @@ function startSubRename(e, td){
     }
   }
   inp.addEventListener('keydown',e2=>{
-    if(e2.key==='Enter'){ e2.preventDefault(); commit(); }
+    if(e2.key==='Enter'&&!e2.shiftKey){ e2.preventDefault(); commit(); }
     if(e2.key==='Escape'){ committed=true; inp.remove(); labelDiv.style.display=''; if(moveBtns) moveBtns.style.display=''; }
   });
   inp.addEventListener('blur',commit);
