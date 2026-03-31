@@ -244,8 +244,8 @@ select option{background:#fff;}
 .sch-label{padding:0 10px 0 14px;width:310px;min-width:310px;position:sticky;left:0;z-index:2;background:var(--surface);border-right:1px solid var(--border2);cursor:pointer;transition:background .15s;vertical-align:top;}
 .sch-label:hover{background:inherit!important;}
 .sch-label-inner{padding:7px 0;display:flex;flex-direction:column;gap:2px;}
-.sch-label-sub{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:275px;}
-.sch-label-detail{font-size:10px;color:var(--text2);white-space:pre-line;line-height:1.55;max-width:275px;word-break:break-all;overflow:visible;text-align:left;}
+.sch-label-sub{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:275px;}
+.sch-label-detail{font-size:12px;color:var(--text2);white-space:pre-line;line-height:1.55;max-width:275px;word-break:break-all;overflow:visible;text-align:left;}
 .sch-cell{text-align:center;padding:5px 3px;border-right:1px solid var(--border2);vertical-align:middle;min-width:68px;}
 /* Gantt bar spans start→end */
 .sch-bar{height:22px;border-radius:5px;margin:0 3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;cursor:pointer;transition:filter .18s,transform .1s;white-space:nowrap;padding:0 5px;}
@@ -544,9 +544,9 @@ select option{background:#fff;}
     <div class="stat total"><span class="n" id="sTot">0</span> 総タスク</div>
     <div class="stat" style="cursor:pointer;border-color:#f5c0cb" onclick="setAlertFilter('due')" title="今月が期限のタスク"><span class="n" id="sDue" style="color:#e85d26">0</span> 今月期限</div>
     <div class="stat" style="cursor:pointer;border-color:#f5c0cb" onclick="setAlertFilter('overdue')" title="期限を過ぎた未着手タスク"><span class="n" id="sOverdue" style="color:#d63a55">0</span> ⚠️ 遅延</div>
-    <div class="stat todo"><span class="n" id="sTodo" style="color:#e85d26">0</span> 未着手</div>
-    <div class="stat wip"><span class="n" id="sWip" style="color:#16a34a">0</span> 進行中</div>
-    <div class="stat done"><span class="n" id="sDone" style="color:#b38600">0</span> 完了（<span id="sPct">0</span>%）</div>
+    <div class="stat todo" style="cursor:pointer" onclick="setStatusFilter(statusFilter==='未'?'':'未')" title="未着手でフィルター"><span class="n" id="sTodo" style="color:#e85d26">0</span> 未着手</div>
+    <div class="stat wip" style="cursor:pointer" onclick="setStatusFilter(statusFilter==='進行中'?'':'進行中')" title="進行中でフィルター"><span class="n" id="sWip" style="color:#16a34a">0</span> 進行中</div>
+    <div class="stat done" style="cursor:pointer" onclick="setStatusFilter(statusFilter==='完了'?'':'完了')" title="完了でフィルター"><span class="n" id="sDone" style="color:#b38600">0</span> 完了（<span id="sPct">0</span>%）</div>
   </div>
   <div class="topbar-actions" style="margin-left:auto">
     <input type="file" id="csvImportInput" accept=".csv" style="display:none" onchange="importCSV(this)">
@@ -1572,7 +1572,7 @@ function initScheduleFeatures(){
     el.style.backgroundColor='#fff';
   });
   outer.querySelectorAll('.sch-label-detail').forEach(el=>{
-    el.style.fontSize='9px';
+    el.style.fontSize='11px';
     el.style.maxWidth='105px';
   });
 
@@ -1719,7 +1719,7 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
               <button class="sub-up-btn" style="font-size:10px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;line-height:1" title="上へ">↑</button>
               <button class="sub-dn-btn" style="font-size:10px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;line-height:1" title="下へ">↓</button>
             </div>
-            <div style="font-size:11px;font-weight:700;color:var(--text);line-height:1.55;white-space:pre-line;word-break:break-all">${formatSubcategory(sub)}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);line-height:1.55;white-space:pre-line;word-break:break-all">${formatSubcategory(sub)}</div>
           </td>`;
           subFirst=false;
         }
