@@ -3023,9 +3023,24 @@ function saveTask(){
     const i=tasks.findIndex(t=>t.id===editingId);
     if(i>=0)tasks[i]={...tasks[i],...data};
   }else{
-    // sort_orderは現在の最大値+1にして末尾に追加
-    const maxOrder=tasks.length?Math.max(...tasks.map(t=>t.sort_order??0)):0;
-    tasks.push({id:nextId++,...data,sort_order:maxOrder+1});
+    // 同じ大項目・小項目の最後のタスクの直後に挿入する
+    const sameSub=tasks.filter(t=>t.category===cat&&t.subcategory===subcategory);
+    let insertOrder;
+    if(sameSub.length>0){
+      // 同じ小項目グループの最大sort_orderの次
+      const lastOrder=Math.max(...sameSub.map(t=>t.sort_order??0));
+      insertOrder=lastOrder+0.5; // 一旦0.5を足して後で整数に振り直す
+    } else {
+      // 同じ大項目の最後の次
+      const sameCat=tasks.filter(t=>t.category===cat);
+      insertOrder=sameCat.length>0?Math.max(...sameCat.map(t=>t.sort_order??0))+0.5
+        :Math.max(...tasks.map(t=>t.sort_order??0),0)+0.5;
+    }
+    const newTask={id:nextId++,...data,sort_order:insertOrder};
+    tasks.push(newTask);
+    // sort_orderを整数に振り直す
+    tasks.sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
+    tasks.forEach((t,i)=>{ t.sort_order=i; });
   }
   const savedId=editingId!==null?editingId:nextId-1;
   // 自分の更新を記録
