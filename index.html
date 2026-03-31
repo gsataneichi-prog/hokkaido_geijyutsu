@@ -3069,6 +3069,7 @@ function saveTask(){
 /* ═══════════════ DELETE ═══════════════ */
 let deleteId=null;
 function openDel(id){
+  saveScrollPos();
   deleteId=id;
   const t=tasks.find(x=>x.id===id);
   const label=t?.subcategory||t?.detail?.slice(0,30)||'';
