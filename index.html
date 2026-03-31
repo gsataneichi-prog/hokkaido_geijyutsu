@@ -21,7 +21,7 @@
   --radius:12px;--radius-sm:7px;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
+html{}
 body{font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;background:var(--bg);color:var(--text);}
 .app{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
 
@@ -1202,10 +1202,7 @@ function setupRealtimeSync(){
         tasks=tasks.filter(t=>t.id!==delId);
         localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
         rebuildFilters();
-        const _o2=document.getElementById('scheduleOuter');
-        const _sx2=_o2?_o2.scrollLeft:0, _sy2=_o2?_o2.scrollTop:0;
-        render();
-        if(_o2){_o2.scrollLeft=_sx2;_o2.scrollTop=_sy2;}
+        if(currentTab==='schedule') renderKeepScroll(); else render();
         showSyncNotice('タスクが削除されました');
       }
     })
@@ -2435,13 +2432,21 @@ function renderKeepScroll(){
   const sy=o?o.scrollTop:0;
   const vy=v?v.scrollTop:0;
   render();
-  // 複数フレーム待って確実に復元
+  // スクロール復元：smooth無効化して即座にセット
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{
       const o2=document.getElementById('scheduleOuter');
       const v2=document.getElementById('viewScroll');
-      if(o2){o2.scrollLeft=sx;o2.scrollTop=sy;}
-      if(v2) v2.scrollTop=vy;
+      if(o2){
+        o2.style.scrollBehavior='auto';
+        o2.scrollLeft=sx;o2.scrollTop=sy;
+        setTimeout(()=>{ o2.style.scrollBehavior=''; },50);
+      }
+      if(v2){
+        v2.style.scrollBehavior='auto';
+        v2.scrollTop=vy;
+        setTimeout(()=>{ v2.style.scrollBehavior=''; },50);
+      }
     });
   });
 }
