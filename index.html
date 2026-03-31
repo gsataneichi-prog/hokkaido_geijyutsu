@@ -1684,7 +1684,11 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
         // 小項目（subFirst）
         if(subFirst){
           const isLastSub = (sub === (subGroups[subGroups.length-1]?.sub||''));
-          html+=`<td rowspan="${subRowspan}" class="sch-sub-cell" style="vertical-align:middle;border-right:2px solid #b0b8c8;${isLastSub?CAT_BORDER:'border-bottom:1px solid var(--border2)'};position:sticky;left:${catW};z-index:15;background:${cc(cat)}12;width:${subW};min-width:${subW};padding:${isMobile?'3px 4px':'6px 8px'};text-align:center;box-shadow:2px 0 0 #b0b8c8">
+          html+=`<td rowspan="${subRowspan}" class="sch-sub-cell" data-sub="${sub.replace(/"/g,'&quot;')}" data-cat="${cat.replace(/"/g,'&quot;')}" style="vertical-align:middle;border-right:2px solid #b0b8c8;${isLastSub?CAT_BORDER:'border-bottom:1px solid var(--border2)'};position:sticky;left:${catW};z-index:15;background:${cc(cat)}12;width:${subW};min-width:${subW};padding:${isMobile?'3px 4px':'6px 8px'};text-align:center;box-shadow:2px 0 0 #b0b8c8">
+            <div class="sub-move-btns" style="display:none;justify-content:center;gap:2px;margin-bottom:3px">
+              <button onclick="moveSubGroup('${sub.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}','up')" style="font-size:10px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;line-height:1" title="上へ">↑</button>
+              <button onclick="moveSubGroup('${sub.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}','down')" style="font-size:10px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;line-height:1" title="下へ">↓</button>
+            </div>
             <div style="font-size:11px;font-weight:700;color:var(--text);line-height:1.55;white-space:pre-line;word-break:break-all">${formatSubcategory(sub)}</div>
           </td>`;
           subFirst=false;
@@ -1698,13 +1702,14 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
         // 詳細セル
         html+=`<td class="sch-label" style="position:sticky;left:${detLeft};z-index:15;width:${detW};min-width:${detW};vertical-align:middle;background:${rowBg}">
           <div class="sch-label-wrap">
-            <div class="drag-handle" title="ドラッグで並べ替え">⠿</div>
             <div class="sch-label-inner" style="flex:1;padding:5px 4px 5px 0">
               <div class="sch-label-detail">${formatBullet(bulletOnly(t.detail))}</div>
               <div class="manual-ref-link">${hasManualRef(t.detail)?`<div onclick="openManualRef(${t.id})" style="font-size:10px;color:var(--blue);text-align:left;margin-top:2px;cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="クリックでリンクを開く">※マニュアル参照</div>`:''}${hasExtraDetail(t.detail)?`<div onclick="openEdit(${t.id})" style="font-size:10px;color:var(--red);text-align:left;margin-top:2px;cursor:pointer;text-decoration:underline;text-underline-offset:2px" title="クリックで詳細を確認">※詳細有</div>`:''}</div>
             </div>
           </div>
           <div class="sch-row-actions">
+            <button class="icon-btn" onclick="moveRow(${t.id},'up')" title="上へ移動">↑</button>
+            <button class="icon-btn" onclick="moveRow(${t.id},'down')" title="下へ移動">↓</button>
             <button class="icon-btn" onclick="openEdit(${t.id})" title="編集">✏️</button>
             <button class="icon-btn${hasComment(t.id)?' manual':''}" onclick="openEditTab2(${t.id})" title="コメント" style="${hasComment(t.id)?'color:var(--purple);border-color:var(--purple);background:var(--purple-light)':''}">💬${hasComment(t.id)?`<sup style="font-size:8px;color:#7c3aed">${commentCount(t.id)}</sup>`:''}</button>
             <button class="icon-btn del" onclick="openDel(${t.id})" title="削除">🗑</button>
@@ -2409,71 +2414,88 @@ function renderKeepScroll(){
   });
 }
 
-/* ═══════════════ DRAG & DROP 並べ替え ═══════════════ */
-function initDragDrop(){
-  let dragId=null;
-  let dragCat=null;
+/* ═══════════════ 並べ替え（↑↓ボタン方式） ═══════════════ */
 
-  document.querySelectorAll('tr[data-id]').forEach(tr=>{
-    tr.setAttribute('draggable','true');
+// 小項目グループごと上下移動
+function moveSubGroup(sub, cat, dir){
+  // カテゴリ内の小項目の出現順リストを作る
+  const subOrder=[];
+  tasks.forEach(t=>{ if(t.category===cat&&!subOrder.includes(t.subcategory)) subOrder.push(t.subcategory); });
+  const idx=subOrder.indexOf(sub);
+  if(dir==='up'&&idx<=0) return;
+  if(dir==='down'&&idx>=subOrder.length-1) return;
+  const swapWith=subOrder[dir==='up'?idx-1:idx+1];
 
-    tr.addEventListener('dragstart',e=>{
-      dragId=parseInt(tr.dataset.id);
-      const t=tasks.find(x=>x.id===dragId);
-      dragCat=t?.category;
-      tr.classList.add('dragging');
-      e.dataTransfer.effectAllowed='move';
-      e.dataTransfer.setData('text/plain',String(dragId));
-    });
+  // tasks配列を一旦カテゴリ外とカテゴリ内に分ける
+  const before=[], catPart=[], after=[];
+  let inCat=false, pastCat=false;
+  tasks.forEach(t=>{
+    if(t.category===cat){ inCat=true; catPart.push(t); }
+    else if(!inCat){ before.push(t); }
+    else { pastCat=true; after.push(t); }
+  });
 
-    tr.addEventListener('dragend',()=>{
-      tr.classList.remove('dragging');
-      document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
-      dragId=null; dragCat=null;
-    });
+  // catPart内でsubグループを順番に並べ直す
+  const groups={};
+  const order=[];
+  catPart.forEach(t=>{
+    if(!groups[t.subcategory]){ groups[t.subcategory]=[]; order.push(t.subcategory); }
+    groups[t.subcategory].push(t);
+  });
+  const swapIdx=order.indexOf(swapWith);
+  const dragIdx2=order.indexOf(sub);
+  // swap
+  order[dragIdx2]=swapWith; order[swapIdx]=sub;
+  const newCatPart=[];
+  order.forEach(s=>newCatPart.push(...groups[s]));
 
-    tr.addEventListener('dragover',e=>{
-      e.preventDefault();
-      const overId=parseInt(tr.dataset.id);
-      if(overId===dragId) return;
-      const overTask=tasks.find(x=>x.id===overId);
-      if(overTask?.category!==dragCat) return;
-      document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
-      tr.classList.add('drag-over');
-    });
+  // 再結合
+  tasks.length=0;
+  before.forEach(t=>tasks.push(t));
+  newCatPart.forEach(t=>tasks.push(t));
+  after.forEach(t=>tasks.push(t));
 
-    tr.addEventListener('dragleave',()=>{ tr.classList.remove('drag-over'); });
+  tasks.forEach((t,i)=>{ t.sort_order=i; });
+  localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+  newCatPart.forEach(t=>{ sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{}); });
+  renderKeepScroll();
+}
 
-    tr.addEventListener('drop',e=>{
-      e.preventDefault();
-      const dropId=parseInt(tr.dataset.id);
-      if(dropId===dragId||!dragId) return;
-      const dragTask=tasks.find(x=>x.id===dragId);
-      const dropTask=tasks.find(x=>x.id===dropId);
-      if(!dragTask||!dropTask||dragTask.category!==dropTask.category) return;
+// 詳細行を同じ小項目内で上下移動
+function moveRow(id, dir){
+  const t=tasks.find(x=>x.id===id);
+  if(!t) return;
+  const siblings=tasks.filter(x=>x.category===t.category&&x.subcategory===t.subcategory);
+  const idx=siblings.indexOf(t);
+  if(dir==='up'&&idx<=0) return;
+  if(dir==='down'&&idx>=siblings.length-1) return;
+  const swap=siblings[dir==='up'?idx-1:idx+1];
+  const ti=tasks.indexOf(t);
+  const si=tasks.indexOf(swap);
+  tasks[ti]=swap; tasks[si]=t;
+  tasks.forEach((x,i)=>{ x.sort_order=i; });
+  localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+  [t,swap].forEach(x=>{ sb.from('tasks').upsert([{id:x.id,data:x,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{}); });
+  renderKeepScroll();
+}
 
-      // tasksの配列内でdragTaskをdropTaskの前に移動
-      const dragIdx=tasks.indexOf(dragTask);
-      tasks.splice(dragIdx,1);
-      const newDropIdx=tasks.indexOf(dropTask);
-      tasks.splice(newDropIdx,0,dragTask);
-
-      // 全タスクにsort_orderを振り直す
-      tasks.forEach((t,i)=>{ t.sort_order=i; });
-
-      // ローカル保存
-      localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-
-      // Supabase：同じカテゴリのタスクだけ更新
-      const catTasks=tasks.filter(t=>t.category===dragTask.category);
-      catTasks.forEach(t=>{
-        sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).catch(err=>console.warn(err));
-      });
-
-      renderKeepScroll();
-    });
+// 小項目セルにホバーで↑↓を表示・ボタンにイベント登録
+function initSubMoveBtns(){
+  document.querySelectorAll('td.sch-sub-cell').forEach(td=>{
+    const btns=td.querySelector('.sub-move-btns');
+    if(!btns) return;
+    const sub=td.dataset.sub;
+    const cat=td.dataset.cat;
+    const upBtn=td.querySelector('.sub-up-btn');
+    const dnBtn=td.querySelector('.sub-dn-btn');
+    if(upBtn) upBtn.addEventListener('click',e=>{ e.stopPropagation(); moveSubGroup(sub,cat,'up'); });
+    if(dnBtn) dnBtn.addEventListener('click',e=>{ e.stopPropagation(); moveSubGroup(sub,cat,'down'); });
+    td.addEventListener('mouseenter',()=>{ btns.style.display='flex'; });
+    td.addEventListener('mouseleave',()=>{ btns.style.display='none'; });
   });
 }
+
+function initDragDrop(){ initSubMoveBtns(); }
 
 /* 担当者インライン変更 */
 function openAssigneePicker(id, td){
