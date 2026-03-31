@@ -631,12 +631,15 @@ select option{background:#fff;}
   <div class="form-row">
     <div class="form-group">
       <label class="form-label">カテゴリ *</label>
-      <input class="form-input" id="fmCat" list="catList" placeholder="例: 草案">
+      <input class="form-input" id="fmCat" list="catList" placeholder="例: 草案" oninput="updateSubDropdown()">
       <datalist id="catList"></datalist>
     </div>
     <div class="form-group">
       <label class="form-label">小項目</label>
-      <input class="form-input" id="fmSub" placeholder="例: 会場図面">
+      <select class="form-input" id="fmSubSelect" onchange="onSubSelectChange()" style="margin-bottom:4px">
+        <option value="">── 選択または新規入力 ──</option>
+      </select>
+      <input class="form-input" id="fmSub" placeholder="例: 会場図面（新規入力）" style="display:none">
     </div>
   </div>
   <div class="form-group">
@@ -2565,6 +2568,40 @@ function closeRowMenus(){
 }
 document.addEventListener('click', closeRowMenus);
 
+// 大項目が変わったら小項目ドロップダウンを更新
+function updateSubDropdown(){
+  const cat=document.getElementById('fmCat').value.trim();
+  const sel=document.getElementById('fmSubSelect');
+  const inp=document.getElementById('fmSub');
+  // 現在の選択値を保持
+  const currentVal=inp.style.display!=='none'?inp.value:sel.value;
+  // 対象カテゴリの小項目を出現順で取得
+  const subs=[];
+  tasks.forEach(t=>{ if(t.category===cat&&t.subcategory&&!subs.includes(t.subcategory)) subs.push(t.subcategory); });
+  sel.innerHTML='<option value="">── 選択または新規入力 ──</option>';
+  subs.forEach(s=>{ sel.innerHTML+=`<option value="${s.replace(/"/g,'&quot;')}">${s}</option>`; });
+  sel.innerHTML+='<option value="__new__">＋ 新しい小項目を追加</option>';
+  // 既存の値をできるだけ復元
+  if(currentVal&&currentVal!=='__new__'){
+    if(subs.includes(currentVal)){ sel.value=currentVal; inp.style.display='none'; }
+    else { sel.value='__new__'; inp.style.display=''; inp.value=currentVal; }
+  } else {
+    sel.value=''; inp.style.display='none'; inp.value='';
+  }
+}
+function onSubSelectChange(){
+  const sel=document.getElementById('fmSubSelect');
+  const inp=document.getElementById('fmSub');
+  if(sel.value==='__new__'){
+    inp.style.display='';
+    inp.value='';
+    inp.focus();
+  } else {
+    inp.style.display='none';
+    inp.value='';
+  }
+}
+
 // 確認付き行移動
 function confirmMoveRow(id, dir){
   const t=tasks.find(x=>x.id===id);
@@ -2806,6 +2843,8 @@ function openAddModal(){
   const info=document.getElementById('modalTaskInfo');
   if(info) info.style.display='none';
   ['fmCat','fmSub','fmDetail'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fmSubSelect').innerHTML='<option value="">── 選択または新規入力 ──</option>';
+  document.getElementById('fmSub').style.display='none';
   setAssigneeValue('');
   document.getElementById('fmPriority').value='中';
   renderMonthEditor({});
@@ -2832,7 +2871,14 @@ function openEdit(id){
     document.getElementById('modalTaskDetail').textContent=bullet.slice(0,60)+(bullet.length>60?'…':'');
   }
   document.getElementById('fmCat').value=t.category;
-  document.getElementById('fmSub').value=t.subcategory||'';
+  // 小項目ドロップダウンを大項目に合わせて更新してから値をセット
+  updateSubDropdown();
+  const subSel=document.getElementById('fmSubSelect');
+  const subInp=document.getElementById('fmSub');
+  const existingSub=t.subcategory||'';
+  if(!existingSub){ subSel.value=''; subInp.style.display='none'; }
+  else if([...subSel.options].some(o=>o.value===existingSub)){ subSel.value=existingSub; subInp.style.display='none'; }
+  else { subSel.value='__new__'; subInp.style.display=''; subInp.value=existingSub; }
   document.getElementById('fmDetail').value=formatDetail(t.detail);
   setAssigneeValue(t.assignee||'');
   document.getElementById('fmPriority').value=t.priority||'中';
@@ -2962,9 +3008,12 @@ function saveTask(){
   const detail=document.getElementById('fmDetail').value.trim();
   if(!cat||!detail){alert('カテゴリと詳細は必須です');return;}
   const ms=document.getElementById('monthStatusEditor')._ms||{};
+  const subSel=document.getElementById('fmSubSelect');
+  const subInp=document.getElementById('fmSub');
+  const subcategory=subSel.value==='__new__'||subSel.value===''?subInp.value.trim():subSel.value;
   const data={
     category:cat,
-    subcategory:document.getElementById('fmSub').value.trim(),
+    subcategory,
     detail,
     assignee:getAssigneeValue(),
     month_statuses:{...ms},
