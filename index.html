@@ -251,6 +251,18 @@ select option{background:#fff;}
 .sch-label-detail{font-size:12px;color:var(--text2);white-space:pre-line;line-height:1.55;max-width:275px;word-break:break-all;overflow:visible;text-align:left;}
 .sch-cell{text-align:center;padding:5px 3px;border-right:1px solid var(--border2);vertical-align:middle;min-width:68px;}
 /* Gantt bar spans start→end */
+/* ── Login Modal ── */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#1a2236 0%,#2d3748 100%);display:flex;align-items:center;justify-content:center;z-index:99999;}
+.login-box{background:#fff;border-radius:20px;padding:36px 32px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;}
+.login-logo{font-size:48px;margin-bottom:8px;}
+.login-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.login-sub{font-size:12px;color:var(--muted);margin-bottom:24px;}
+.login-name-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;}
+.login-name-btn{padding:10px 6px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
+.login-name-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+.login-name-btn.selected{border-color:var(--accent);background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(232,93,38,.3);}
+.login-user-chip{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;background:var(--accent-light);border:1px solid #f5c4b0;border-radius:20px;font-size:11px;font-weight:600;color:var(--accent);white-space:nowrap;flex-shrink:0;}
+
 .sch-bar{height:22px;border-radius:5px;margin:0 3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;cursor:pointer;transition:filter .18s,transform .1s;white-space:nowrap;padding:0 5px;}
 .sch-bar:hover{filter:brightness(.9);transform:scaleY(1.1);}
 .sch-bar.todo{background:var(--red-light);color:var(--red);border:1px solid #f5c0cb;}
@@ -532,6 +544,17 @@ select option{background:#fff;}
   <div style="font-size:18pt;font-weight:700;letter-spacing:.05em">北海道芸術花火 2026　タスク管理</div>
   <div id="print-meta" style="font-size:9pt;color:#555;margin-top:4px"></div>
 </div>
+<!-- ── Login Modal ── -->
+<div class="login-overlay" id="loginOverlay" style="display:none">
+  <div class="login-box">
+    <div class="login-logo">🎆</div>
+    <div class="login-title">北海道芸術花火 2026</div>
+    <div class="login-sub">あなたの名前を選んでください</div>
+    <div class="login-name-grid" id="loginNameGrid"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;padding:12px" onclick="confirmLogin()">ログイン</button>
+  </div>
+</div>
+
 <div class="app">
 
 <!-- Topbar -->
@@ -566,7 +589,10 @@ select option{background:#fff;}
       </div>
     </div>
     <button class="btn btn-primary" onclick="openAddModal()">＋ タスク追加</button>
-  </div>
+    <div class="login-user-chip" id="loginUserChip" style="display:none">
+      <span>👤</span><span id="loginUserName"></span>
+      <button onclick="logout()" style="border:none;background:none;color:var(--accent);cursor:pointer;font-size:11px;padding:0;margin-left:2px" title="ログアウト">✕</button>
+    </div>
 </div>
 
 <!-- Collapse Toggle -->
@@ -704,9 +730,11 @@ select option{background:#fff;}
       <label class="form-label">💬 コメント</label>
       <div id="fmCommentList" style="margin-bottom:8px;max-height:260px;overflow-y:auto"></div>
       <div style="display:flex;flex-direction:column;gap:6px">
-        <div style="display:flex;gap:8px;align-items:center">
-          <select id="fmCommentAuthor" class="form-select" style="width:auto;min-width:90px"></select>
-          <span style="font-size:11px;color:var(--muted)">として投稿</span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--muted)">投稿者：</span>
+          <span id="fmCommentAuthorLabel" style="font-size:12px;font-weight:700;color:var(--accent)"></span>
+          <span style="font-size:11px;color:var(--muted);margin-left:8px">宛先：</span>
+          <select id="fmCommentTo" style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:12px;outline:none;flex:1;min-width:80px"></select>
         </div>
         <div style="display:flex;gap:8px">
           <input type="text" id="fmCommentInput" class="form-input" placeholder="コメントを入力…">
@@ -844,9 +872,11 @@ select option{background:#fff;}
       <div class="mm-section-title"><span class="mm-sec-icon">💬</span> コメント</div>
       <div id="mmCommentList" style="margin-bottom:10px;max-height:200px;overflow-y:auto"></div>
       <div style="display:flex;flex-direction:column;gap:6px">
-        <div style="display:flex;gap:8px;align-items:center">
-          <select id="mmCommentAuthor" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:12px;outline:none"></select>
-          <span style="font-size:11px;color:var(--muted)">として投稿</span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--muted)">投稿者：</span>
+          <span id="mmCommentAuthorLabel" style="font-size:12px;font-weight:700;color:var(--accent)"></span>
+          <span style="font-size:11px;color:var(--muted);margin-left:8px">宛先：</span>
+          <select id="mmCommentTo" style="padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:12px;outline:none;flex:1;min-width:80px"></select>
         </div>
         <div style="display:flex;gap:8px">
           <input type="text" id="mmCommentInput" placeholder="コメントを入力…" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:12px;outline:none" >
@@ -1104,6 +1134,9 @@ const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let historyLog=JSON.parse(localStorage.getItem('hf2026_history_v1')||'[]');
+
+/* ── ログイン状態 ── */
+let currentUser=localStorage.getItem('hf2026_user')||null;
 function saveHistory(){
   localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog.slice(-500)));
   // Supabaseに最新1件だけ追加
@@ -1374,12 +1407,16 @@ function getUnreadComments(){
     const lastRead=readTimestamps[taskId]||0;
     m.comments.forEach(c=>{
       if(c.ts>lastRead){
+        // 自分宛(to===currentUser) または 全員宛(to==='all'またはtoなし) のみ
+        const isForMe=!c.to||c.to==='all'||(currentUser&&c.to===currentUser);
+        if(!isForMe) return;
         const t=tasks.find(x=>x.id===parseInt(taskId));
         unread.push({
           taskId:parseInt(taskId),
           sub:t?.subcategory||t?.detail?.slice(0,25)||'',
           cat:t?.category||'',
           author:c.author,
+          to:c.to||'all',
           text:c.text,
           date:c.date,
           ts:c.ts
@@ -2035,6 +2072,7 @@ function renderHistory(){
       <thead>
         <tr style="background:var(--bg2);border-bottom:2px solid var(--border)">
           <th style="padding:8px 12px;text-align:left;color:#4a5568;font-weight:700">日時</th>
+          <th style="padding:8px 12px;text-align:left;color:#4a5568;font-weight:700">操作者</th>
           <th style="padding:8px 12px;text-align:left;color:#4a5568;font-weight:700">小項目</th>
           <th style="padding:8px 12px;text-align:left;color:#4a5568;font-weight:700">詳細</th>
           <th style="padding:8px 12px;text-align:left;color:#4a5568;font-weight:700">担当者</th>
@@ -2046,17 +2084,18 @@ function renderHistory(){
 
   logs.forEach((log,i)=>{
     const bg=i%2===0?'#fff':'var(--bg2)';
+    const toLabel=log.to??(log.from?undefined:undefined);
+    const changeCell=log.action?
+      `<span style="font-weight:700;color:var(--blue)">${log.action}</span>${log.detail?`<br><span style="font-size:10px;color:var(--muted)">${log.detail}</span>`:''}`:
+      `<span style="color:var(--muted)">${stIcon(log.from)} ${log.from}</span><span style="margin:0 6px;color:var(--muted)">→</span><span style="font-weight:700">${stIcon(log.to)} ${isDone(log.to)?'完了':log.to}</span>`;
     html+=`<tr style="background:${bg};border-bottom:1px solid var(--border2)">
       <td style="padding:8px 12px;color:var(--muted);white-space:nowrap">${log.date}</td>
-      <td style="padding:8px 12px;font-weight:600;color:var(--text)">${log.sub}</td>
-      <td style="padding:8px 12px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${log.detail}</td>
-      <td style="padding:8px 12px;color:var(--blue);font-weight:500">${log.assignee}</td>
-      <td style="padding:8px 12px;color:var(--text)">${log.month}</td>
-      <td style="padding:8px 12px;text-align:center;white-space:nowrap">
-        <span style="color:var(--muted)">${stIcon(log.from)} ${log.from}</span>
-        <span style="margin:0 6px;color:var(--muted)">→</span>
-        <span style="font-weight:700">${stIcon(log.to)} ${log.to}</span>
-      </td>
+      <td style="padding:8px 12px;font-weight:600;color:var(--accent)">${log.user||''}</td>
+      <td style="padding:8px 12px;font-weight:600;color:var(--text)">${log.sub||''}</td>
+      <td style="padding:8px 12px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${log.detail||''}</td>
+      <td style="padding:8px 12px;color:var(--blue);font-weight:500">${log.assignee||''}</td>
+      <td style="padding:8px 12px;color:var(--text)">${log.month||''}</td>
+      <td style="padding:8px 12px;text-align:center;white-space:nowrap">${changeCell}</td>
     </tr>`;
   });
 
@@ -2302,7 +2341,8 @@ function _saveMonthStatusChange(id, month, from, to){
     assignee: t.assignee||'未定',
     month: month,
     from: from,
-    to: to
+    to: to,
+    user: currentUser||'不明'
   });
   _myRecentUpdates.add(id);
   patchScheduleRow(id);
@@ -2739,7 +2779,7 @@ function startCatRename(e, td){
         _myRecentUpdates.add(t.id);
         sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
       });
-      const latest={ts:Date.now(),taskId:affected[0]?.id,action:'大項目リネーム',detail:`「${oldCat}」→「${newCat}」`,user:'自分'};
+      const latest={ts:Date.now(),taskId:affected[0]?.id,action:'大項目リネーム',detail:`「${oldCat}」→「${newCat}」`,user:currentUser||'不明'};
       historyLog.push(latest);
       localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog));
       sb.from('history').insert([{data:latest}]).then(()=>{}).catch(()=>{});
@@ -2854,7 +2894,7 @@ function startSubRename(e, td){
         sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
       });
       // 履歴
-      const latest={ts:Date.now(),taskId:affected[0]?.id,action:'小項目リネーム',detail:`「${oldSub}」→「${newSub}」`,user:'自分'};
+      const latest={ts:Date.now(),taskId:affected[0]?.id,action:'小項目リネーム',detail:`「${oldSub}」→「${newSub}」`,user:currentUser||'不明'};
       historyLog.push(latest);
       localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog));
       sb.from('history').insert([{data:latest}]).then(()=>{}).catch(()=>{});
@@ -3013,9 +3053,8 @@ function switchEditTab(n){
 function loadModalCommentPane(id){
   const m=manuals[id]||{};
   renderModalComments(m.comments||[],id);
-  const t=tasks.find(x=>x.id===id);
-  const sel=document.getElementById('fmCommentAuthor');
-  if(sel) sel.innerHTML=assignees.filter(a=>a).map(a=>`<option value="${a}"${t&&a===t.assignee?' selected':''}>${a}</option>`).join('');
+  _updateCommentAuthorLabels();
+  _populateToSelects();
   markTaskCommentsRead(id);
 }
 
@@ -3050,9 +3089,13 @@ function renderModalComments(comments,id){
   if(!comments.length){el.innerHTML='<div style="font-size:11px;color:var(--muted);padding:4px 0">まだコメントはありません</div>';return;}
   el.innerHTML=[...comments].reverse().map((c,ri)=>{
     const i=comments.length-1-ri;
-    return`<div class="mm-comment">
+    const toLabel=(!c.to||c.to==='all')?'全員':`→ ${c.to}`;
+    const isToMe=currentUser&&(c.to===currentUser||!c.to||c.to==='all');
+    const highlight=isToMe?'border-left:3px solid var(--purple);background:var(--purple-light);padding-left:6px;':'';
+    return`<div class="mm-comment" style="${highlight}">
       <div class="mm-comment-header">
         <span class="mm-comment-author">${c.author}</span>
+        <span style="font-size:10px;color:${c.to&&c.to!=='all'?'var(--purple)':'var(--muted)'};margin-left:4px">${toLabel}</span>
         <span class="mm-comment-date">${c.date}</span>
         <button class="mm-comment-del" onclick="delModalComment(${i})">✕</button>
       </div>
@@ -3064,12 +3107,13 @@ function renderModalComments(comments,id){
 function addModalComment(){
   const inp=document.getElementById('fmCommentInput');
   const text=inp.value.trim();if(!text||!editingId)return;
-  const author=document.getElementById('fmCommentAuthor').value||'未定';
+  const author=currentUser||'未定';
+  const to=document.getElementById('fmCommentTo')?.value||'all';
   if(!manuals[editingId])manuals[editingId]={urls:[],memo:'',comments:[]};
   if(!manuals[editingId].comments)manuals[editingId].comments=[];
   const now=new Date();
   const date=`${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  manuals[editingId].comments.push({author,text,date,ts:now.getTime()});
+  manuals[editingId].comments.push({author,to,text,date,ts:now.getTime()});
   inp.value='';save(null,'manual');
   renderModalComments(manuals[editingId].comments,editingId);
   updateCommentBadge();
@@ -3393,9 +3437,9 @@ function openManual(id){
   document.getElementById('mmMemo').value=m.memo||'';
   renderUrlList(m.urls||[]);
   renderComments(m.comments||[]);
-  // 担当者セレクト更新
-  const sel=document.getElementById('mmCommentAuthor');
-  sel.innerHTML=assignees.filter(a=>a).map(a=>`<option value="${a}"${a===t.assignee?' selected':''}>${a}</option>`).join('');
+  // 担当者セレクト→ログインユーザー表示に変更
+  _updateCommentAuthorLabels();
+  _populateToSelects();
   document.getElementById('mmSavedNote').style.opacity='0';
   document.getElementById('manualModal').style.display='flex';
   // このタスクのコメントを既読としてマーク
@@ -3407,9 +3451,13 @@ function renderComments(comments){
   if(!comments.length){el.innerHTML='<div style="font-size:11px;color:var(--muted);padding:4px 0">まだコメントはありません</div>';return;}
   el.innerHTML=[...comments].reverse().map((c,ri)=>{
     const i=comments.length-1-ri;
-    return`<div class="mm-comment">
+    const toLabel=(!c.to||c.to==='all')?'全員':`→ ${c.to}`;
+    const isToMe=currentUser&&(c.to===currentUser||!c.to||c.to==='all');
+    const highlight=isToMe?'border-left:3px solid var(--purple);background:var(--purple-light);':'';
+    return`<div class="mm-comment" style="${highlight}">
       <div class="mm-comment-header">
         <span class="mm-comment-author">${c.author}</span>
+        <span style="font-size:10px;color:${c.to&&c.to!=='all'?'var(--purple)':'var(--muted)'};margin-left:4px">${toLabel}</span>
         <span class="mm-comment-date">${c.date}</span>
         <button class="mm-comment-del" onclick="deleteComment(${i})" title="削除">✕</button>
       </div>
@@ -3418,16 +3466,89 @@ function renderComments(comments){
   }).join('');
 }
 
+/* ═══════════════ LOGIN ═══════════════ */
+function initLogin(){
+  if(currentUser){
+    applyLogin(currentUser);
+  } else {
+    showLoginModal();
+  }
+}
+
+function showLoginModal(){
+  const grid=document.getElementById('loginNameGrid');
+  const names=assignees.filter(a=>a&&a!=='未定');
+  grid.innerHTML=names.map(n=>`<button class="login-name-btn" onclick="selectLoginName(this,'${n.replace(/'/g,"\\'")}')">${n}</button>`).join('');
+  document.getElementById('loginOverlay').style.display='flex';
+}
+
+let _selectedLoginName=null;
+function selectLoginName(btn, name){
+  document.querySelectorAll('.login-name-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  _selectedLoginName=name;
+}
+
+function confirmLogin(){
+  if(!_selectedLoginName){alert('名前を選んでください');return;}
+  currentUser=_selectedLoginName;
+  localStorage.setItem('hf2026_user',currentUser);
+  document.getElementById('loginOverlay').style.display='none';
+  applyLogin(currentUser);
+}
+
+function applyLogin(name){
+  currentUser=name;
+  // トップバーのチップ表示
+  const chip=document.getElementById('loginUserChip');
+  const nameEl=document.getElementById('loginUserName');
+  if(chip){chip.style.display='flex';}
+  if(nameEl) nameEl.textContent=name;
+  // コメント投稿者ラベル更新
+  _updateCommentAuthorLabels();
+  // バッジを自分宛フィルターで更新
+  updateCommentBadge();
+}
+
+function logout(){
+  if(!confirm(`「${currentUser}」としてのログインを解除しますか？`)) return;
+  currentUser=null;
+  localStorage.removeItem('hf2026_user');
+  _selectedLoginName=null;
+  const chip=document.getElementById('loginUserChip');
+  if(chip) chip.style.display='none';
+  showLoginModal();
+}
+
+function _updateCommentAuthorLabels(){
+  const lbl1=document.getElementById('mmCommentAuthorLabel');
+  const lbl2=document.getElementById('fmCommentAuthorLabel');
+  if(lbl1) lbl1.textContent=currentUser||'未ログイン';
+  if(lbl2) lbl2.textContent=currentUser||'未ログイン';
+  // 宛先ドロップダウンを更新
+  _populateToSelects();
+}
+
+function _populateToSelects(){
+  const names=assignees.filter(a=>a&&a!=='未定');
+  const opts='<option value="all">全員</option>'+names.map(n=>`<option value="${n}">${n}</option>`).join('');
+  ['mmCommentTo','fmCommentTo'].forEach(id=>{
+    const sel=document.getElementById(id);
+    if(sel) sel.innerHTML=opts;
+  });
+}
+
 function addComment(){
   const inp=document.getElementById('mmCommentInput');
   const text=inp.value.trim();
   if(!text||!manualId)return;
-  const author=document.getElementById('mmCommentAuthor').value||'未定';
+  const author=currentUser||'未定';
+  const to=document.getElementById('mmCommentTo')?.value||'all';
   if(!manuals[manualId])manuals[manualId]={urls:[],memo:'',comments:[]};
   if(!manuals[manualId].comments)manuals[manualId].comments=[];
   const now=new Date();
   const date=`${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  manuals[manualId].comments.push({author,text,date,ts:now.getTime()});
+  manuals[manualId].comments.push({author,to,text,date,ts:now.getTime()});
   inp.value='';
   save(null,'manual');
   renderComments(manuals[manualId].comments);
@@ -3790,6 +3911,8 @@ rebuildFilters();updateStats();render();
 })();
 // Supabaseからデータ読み込み
 loadFromSupabase();
+// ログイン確認
+initLogin();
 
 </script>
 <!-- 共通フローティングメニュー -->
