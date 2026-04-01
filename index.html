@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>北海道芸術花火 2026 タスク管理</title>
+<title id="pageTitle">北海道芸術花火 2026 タスク管理</title>
 
 <style>
 :root {
@@ -548,7 +548,7 @@ select option{background:#fff;}
 <div class="login-overlay" id="loginOverlay" style="display:none">
   <div class="login-box">
     <div class="login-logo">🎆</div>
-    <div class="login-title">北海道芸術花火 2026</div>
+    <div class="login-title" id="loginTitle">北海道芸術花火 2026</div>
     <div class="login-sub">あなたの名前を選んでください</div>
     <div class="login-name-grid" id="loginNameGrid"></div>
     <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;padding:12px" onclick="confirmLogin()">ログイン</button>
@@ -562,7 +562,7 @@ select option{background:#fff;}
   <div class="logo">
     <div class="logo-icon-wrap">🎆</div>
     <div id="syncDot" title="Supabase接続状態" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;margin-left:-4px;margin-top:-20px;flex-shrink:0"></div>
-    <div><h1>北海道芸術花火 2026</h1><sub>TASK MANAGEMENT SYSTEM</sub></div>
+    <div><h1 id="topbarTitle">北海道芸術花火 2026</h1><sub>TASK MANAGEMENT SYSTEM</sub></div>
   </div>
   <div class="topbar-stats">
     <div id="sCommentBadge" onclick="showUnreadComments()" title="未読コメントを確認" style="display:none;cursor:pointer;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;box-shadow:0 0 0 3px rgba(124,58,237,.3),0 2px 8px rgba(124,58,237,.4);align-items:center;gap:6px;white-space:nowrap;flex-shrink:0">💬 <span id="sComment">0</span> 件の新着</div>
@@ -577,6 +577,11 @@ select option{background:#fff;}
   <div class="topbar-actions" style="margin-left:auto">
     <input type="file" id="csvImportInput" accept=".csv" style="display:none" onchange="importCSV(this)">
     <input type="file" id="jsonRestoreInput" accept=".json" style="display:none" onchange="importJSON(this)">
+    <!-- 各大会タスク票ボタン -->
+    <div style="position:relative">
+      <button class="btn btn-ghost" id="projectMenuBtn" onclick="toggleProjectMenu()" style="gap:4px;border-color:var(--blue);color:var(--blue)">🎆 各大会タスク票 <span style="font-size:9px" id="projectMenuArrow">▼</span></button>
+      <div id="projectMenu" style="display:none;position:fixed;left:auto;top:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.18);z-index:9999;min-width:200px;overflow:hidden"></div>
+    </div>
     <!-- メニューボタン -->
     <div style="position:relative">
       <button class="btn btn-ghost" id="menuToggleBtn" onclick="toggleActionMenu()" style="gap:4px">⚙️ メニュー <span style="font-size:9px" id="menuArrow">▼</span></button>
@@ -1120,8 +1125,20 @@ const INIT=[
 
 /* ═══════════════ CONSTANTS ═══════════════ */
 const MONTHS=['12月(前年)','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-const NOW_MONTH='3月';
+const NOW_MONTH=(()=>{const m=new Date().getMonth()+1;const y=new Date().getFullYear();const d=new Date().getMonth();return d===11?'12月(前年)':m+'月';})();
 const HONBAN_MONTH='9月';
+/* ═══════════════ PROJECTS ═══════════════ */
+const PROJECTS=[
+  {id:'hokkaido2026', name:'北海道芸術花火2026', date:'2026-09-06', emoji:'🎆'},
+  {id:'taki2026',     name:'たきの花火2026',     date:'2026-08-01', emoji:'🎇'},
+  {id:'osaka2026',    name:'大阪芸術花火2026',    date:'2026-10-01', emoji:'✨'},
+];
+const _urlParams=new URLSearchParams(location.search);
+const CURRENT_PROJECT_ID=_urlParams.get('project')||'hokkaido2026';
+const CURRENT_PROJECT=PROJECTS.find(p=>p.id===CURRENT_PROJECT_ID)||PROJECTS[0];
+// localStorageキープレフィックス（プロジェクトごとに独立）
+const LS=`hf_${CURRENT_PROJECT_ID}`;
+
 const CAT_COLOR_DEFAULT={
   '草案':'#e85d26','組織':'#1a9e6e','申請':'#1d6fb8','保険':'#c97800',
   'チケット':'#d63a55','協賛':'#6d40cc','広報':'#d4367a','花火':'#b34a20',
@@ -1129,8 +1146,8 @@ const CAT_COLOR_DEFAULT={
   '地元':'#2d9c80','運営':'#4a5568','経理事務':'#6d7a8c','開催後':'#4a5568',
   '世界一たのしいゴミ拾い':'#1a9e6e'
 };
-let CAT_COLOR={...CAT_COLOR_DEFAULT,...JSON.parse(localStorage.getItem('hf2026_cat_colors')||'{}')};
-function saveCatColors(){localStorage.setItem('hf2026_cat_colors',JSON.stringify(CAT_COLOR));}
+let CAT_COLOR={...CAT_COLOR_DEFAULT,...JSON.parse(localStorage.getItem(`${LS}_cat_colors`)||'{}')};
+function saveCatColors(){localStorage.setItem(`${LS}_cat_colors`,JSON.stringify(CAT_COLOR));}
 const AVATAR_COLORS=['#e85d26','#1a9e6e','#1d6fb8','#c97800','#d63a55','#6d40cc','#d4367a','#b34a20','#5b6dcc'];
 const STATUS_CYCLE=['未','進行中','完了'];
 
@@ -1141,12 +1158,12 @@ const SUPABASE_URL='https://gevgcxadmdvjyinnojqu.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdldmdjeGFkbWR2anlpbm5vanF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNTg0NTYsImV4cCI6MjA4OTYzNDQ1Nn0.5YoKiLCkEJRZixsk3rzJ19l8bua9mhLcesARiSKW9r8';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-let historyLog=JSON.parse(localStorage.getItem('hf2026_history_v1')||'[]');
+let historyLog=JSON.parse(localStorage.getItem(`${LS}_history`)||'[]');
 
 /* ── ログイン状態 ── */
 let currentUser=localStorage.getItem('hf2026_user')||null;
 function saveHistory(){
-  localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog.slice(-500)));
+  localStorage.setItem(`${LS}_history`,JSON.stringify(historyLog.slice(-500)));
   // Supabaseに最新1件だけ追加
   const latest=historyLog[historyLog.length-1];
   if(latest) sb.from('history').insert([{data:latest}]).then(()=>{}).catch(()=>{});
@@ -1158,16 +1175,16 @@ async function loadHistoryFromSupabase(){
     const {data}=await sb.from('history').select('*').order('id',{ascending:false}).limit(500);
     if(data&&data.length>0){
       historyLog=data.map(r=>r.data).reverse();
-      localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog));
+      localStorage.setItem(`${LS}_history`,JSON.stringify(historyLog));
     }
   }catch(e){
     console.warn('History load failed:', e);
   }
 }
 
-let tasks=JSON.parse(localStorage.getItem('hf2026_v10')||'null')||INIT.map(t=>(({...t,month_statuses:{...t.month_statuses}})));
-let assignees=JSON.parse(localStorage.getItem('hf2026_assignees_v9')||'null')||['中田','沼澤','伊藤','中山','大居','川内','三上','種市','悠跡','城木','加藤','中島','梅田','未定'];
-let manuals=JSON.parse(localStorage.getItem('hf2026_manuals_v10')||'{}');
+let tasks=JSON.parse(localStorage.getItem(`${LS}_tasks`)||'null')||INIT.map(t=>(({...t,month_statuses:{...t.month_statuses}})));
+let assignees=JSON.parse(localStorage.getItem(`${LS}_assignees`)||'null')||['中田','沼澤','伊藤','中山','大居','川内','三上','種市','悠跡','城木','加藤','中島','梅田','未定'];
+let manuals=JSON.parse(localStorage.getItem(`${LS}_manuals`)||'{}');
 
 // Supabaseからデータを読み込む
 async function loadFromSupabase(){
@@ -1180,7 +1197,7 @@ async function loadFromSupabase(){
       let needsOrder=tasks.some(t=>t.sort_order===undefined);
       if(needsOrder) tasks.forEach((t,i)=>{if(t.sort_order===undefined)t.sort_order=i;});
       tasks.sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
-      localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+      localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
       // nextIdを現在の最大ID+1に更新（重複防止）
       const maxId=Math.max(...tasks.map(t=>t.id||0));
       if(maxId>=nextId) nextId=maxId+1;
@@ -1190,13 +1207,13 @@ async function loadFromSupabase(){
     if(mData&&mData.length>0){
       manuals={};
       mData.forEach(r=>{manuals[r.task_id]=r.data;});
-      localStorage.setItem('hf2026_manuals_v10',JSON.stringify(manuals));
+      localStorage.setItem(`${LS}_manuals`,JSON.stringify(manuals));
     }
     // 担当者
     const {data:aData}=await sb.from('assignees').select('*').order('id').limit(1);
     if(aData&&aData.length>0){
       assignees=aData[0].names;
-      localStorage.setItem('hf2026_assignees_v9',JSON.stringify(assignees));
+      localStorage.setItem(`${LS}_assignees`,JSON.stringify(assignees));
     }
     rebuildFilters();
     render();
@@ -1226,7 +1243,7 @@ function setupRealtimeSync(){
       else tasks[tasks.findIndex(t=>t.id===newTask.id)]=newTask;
       // nextIdを更新
       if(newTask.id>=nextId) nextId=newTask.id+1;
-      localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+      localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
       rebuildFilters();
       if(currentTab==='schedule') renderKeepScroll(); else render();
       updateStats();
@@ -1244,7 +1261,7 @@ function setupRealtimeSync(){
       console.log('processing update for id:', newTask.id, 'tab:', currentTab);
       const idx=tasks.findIndex(t=>t.id===newTask.id);
       if(idx>=0) tasks[idx]=newTask; else tasks.push(newTask);
-      localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+      localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
       if(currentTab==='schedule'){
         // sort_orderが変わった可能性がある場合はdebounceで並べ直し
         if(newTask.sort_order!==undefined){
@@ -1261,7 +1278,7 @@ function setupRealtimeSync(){
       const delId=payload.old?.id;
       if(delId){
         tasks=tasks.filter(t=>t.id!==delId);
-        localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+        localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
         rebuildFilters();
         if(currentTab==='schedule') renderKeepScroll(); else render();
         showSyncNotice('タスクが削除されました');
@@ -1283,7 +1300,7 @@ function setupRealtimeSync(){
       if(!exists){
         historyLog.push(h);
         historyLog.sort((a,b)=>a.ts-b.ts);
-        localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog));
+        localStorage.setItem(`${LS}_history`,JSON.stringify(historyLog));
         if(currentTab==='history') render();
       }
     })
@@ -1298,9 +1315,9 @@ function showSyncNotice(msg){}
 let nextId=213;
 
 function save(changedTaskId=null, changedType='task'){
-  localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-  localStorage.setItem('hf2026_assignees_v9',JSON.stringify(assignees));
-  localStorage.setItem('hf2026_manuals_v10',JSON.stringify(manuals));
+  localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
+  localStorage.setItem(`${LS}_assignees`,JSON.stringify(assignees));
+  localStorage.setItem(`${LS}_manuals`,JSON.stringify(manuals));
   // Supabaseに非同期保存（変更したものだけ）
   saveToSupabase(changedTaskId, changedType);
 }
@@ -1383,8 +1400,8 @@ window.addEventListener('load',()=>{
 
 /* ═══════════════ UNREAD COMMENTS ═══════════════ */
 // 既読管理：タスクごとに「最後に開いた日時」を保存
-let readTimestamps=JSON.parse(localStorage.getItem('hf2026_readTs')||'{}');
-function saveReadTs(){localStorage.setItem('hf2026_readTs',JSON.stringify(readTimestamps));}
+let readTimestamps=JSON.parse(localStorage.getItem(`${LS}_readTs`)||'{}');
+function saveReadTs(){localStorage.setItem(`${LS}_readTs`,JSON.stringify(readTimestamps));}
 
 function markTaskCommentsRead(taskId){
   readTimestamps[taskId]=Date.now();
@@ -1452,11 +1469,11 @@ function updateCommentBadge(){
       badge.style.animation='pulse 2s infinite';
     }
     // ページタイトルにも件数を表示
-    document.title=`(${unread.length}件) 北海道芸術花火 2026`;
+    document.title=`(${unread.length}件) ${CURRENT_PROJECT.name}`;
   } else {
     badge.style.display='none';
     badge.style.animation='none';
-    document.title='北海道芸術花火 2026';
+    document.title=`${CURRENT_PROJECT.name} タスク管理`;
   }
 }
 
@@ -1992,7 +2009,7 @@ function renderHelp(){
 
   return`<div style="padding:24px;max-width:820px;margin:0 auto">
     <h2 style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px">❓ 使い方ガイド</h2>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:20px">北海道芸術花火 2026 タスク管理ツール — 全機能一覧</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:20px">${CURRENT_PROJECT.name} タスク管理ツール — 全機能一覧</p>
 
     <!-- ステータス凡例 -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
@@ -2148,7 +2165,7 @@ function renderHistory(){
 function clearHistory(){
   if(!confirm('変更履歴をすべて削除しますか？\n（Supabase上の履歴もすべて削除されます）')) return;
   historyLog=[];
-  localStorage.setItem('hf2026_history_v1','[]');
+  localStorage.setItem(`${LS}_history`,'[]');
   sb.from('history').delete().neq('id',0).then(()=>{}).catch(()=>{});
   render();
 }
@@ -2391,8 +2408,8 @@ function _saveMonthStatusChange(id, month, from, to){
   patchScheduleRow(id);
   setTimeout(function(){
     updateStats();
-    localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
-    localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog.slice(-500)));
+    localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
+    localStorage.setItem(`${LS}_history`,JSON.stringify(historyLog.slice(-500)));
     var t2=tasks.find(function(x){return x.id===id;});
     if(t2) sb.from('tasks').upsert([{id:t2.id,data:t2,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(){});
     var latest=historyLog[historyLog.length-1];
@@ -2655,7 +2672,7 @@ function moveSubGroup(sub, cat, dir){
   after.forEach(t=>tasks.push(t));
 
   tasks.forEach((t,i)=>{ t.sort_order=i; });
-  localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+  localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
   newCatPart.forEach(t=>{
     _myRecentUpdates.add(t.id);
     sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
@@ -2676,7 +2693,7 @@ function moveRow(id, dir){
   const si=tasks.indexOf(swap);
   tasks[ti]=swap; tasks[si]=t;
   tasks.forEach((x,i)=>{ x.sort_order=i; });
-  localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+  localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
   [t,swap].forEach(x=>{
     _myRecentUpdates.add(x.id);
     sb.from('tasks').upsert([{id:x.id,data:x,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
@@ -2690,7 +2707,7 @@ function _scheduleReorderDebounce(){
   if(_reorderTimer) clearTimeout(_reorderTimer);
   _reorderTimer=setTimeout(()=>{
     tasks.sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
-    localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+    localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
     renderKeepScroll();
     _reorderTimer=null;
   },400);
@@ -2817,7 +2834,7 @@ function moveCatGroup(cat, dir){
   order.forEach(c=>newTasks.push(...groups[c]));
   tasks.length=0; newTasks.forEach(t=>tasks.push(t));
   tasks.forEach((t,i)=>{ t.sort_order=i; });
-  localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+  localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
   tasks.forEach(t=>{
     _myRecentUpdates.add(t.id);
     sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
@@ -2850,14 +2867,14 @@ function startCatRename(e, td){
       affected.forEach(t=>{ t.category=newCat; });
       // 色を引き継ぐ
       if(CAT_COLOR[oldCat]){ CAT_COLOR[newCat]=CAT_COLOR[oldCat]; delete CAT_COLOR[oldCat]; saveCatColors(); }
-      localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+      localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
       affected.forEach(t=>{
         _myRecentUpdates.add(t.id);
         sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
       });
       const latest={ts:Date.now(),taskId:affected[0]?.id,action:'大項目リネーム',detail:`「${oldCat}」→「${newCat}」`,user:currentUser||'不明'};
       historyLog.push(latest);
-      localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog));
+      localStorage.setItem(`${LS}_history`,JSON.stringify(historyLog));
       sb.from('history').insert([{data:latest}]).then(()=>{}).catch(()=>{});
       renderKeepScroll();
     }
@@ -2963,7 +2980,7 @@ function startSubRename(e, td){
       // 同じcat+subの全タスクを一括リネーム
       const affected=tasks.filter(t=>t.category===cat&&t.subcategory===oldSub);
       affected.forEach(t=>{ t.subcategory=newSub; });
-      localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+      localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
       // Supabase保存
       affected.forEach(t=>{
         _myRecentUpdates.add(t.id);
@@ -2972,7 +2989,7 @@ function startSubRename(e, td){
       // 履歴
       const latest={ts:Date.now(),taskId:affected[0]?.id,action:'小項目リネーム',detail:`「${oldSub}」→「${newSub}」`,user:currentUser||'不明'};
       historyLog.push(latest);
-      localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog));
+      localStorage.setItem(`${LS}_history`,JSON.stringify(historyLog));
       sb.from('history').insert([{data:latest}]).then(()=>{}).catch(()=>{});
       renderKeepScroll();
     } else {
@@ -3462,7 +3479,7 @@ function saveTask(){
   // 自分の更新を記録
   _myRecentUpdates.add(savedId);
   // Supabaseに保存
-  localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+  localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
   setTimeout(function(){
     if(editingId!==null){
       if(subGroupChanged){
@@ -3504,7 +3521,7 @@ function closeConfirm(){document.getElementById('confirmModal').style.display='n
 function confirmDelete(){
   const idToDel=deleteId;
   tasks=tasks.filter(t=>t.id!==idToDel);
-  localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+  localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
   sb.from('tasks').delete().eq('id',idToDel).then(()=>{}).catch(e=>console.warn('Delete failed:',e));
   closeConfirm();rebuildFilters();
   if(currentTab==='schedule') renderKeepScroll(); else render();
@@ -3903,7 +3920,7 @@ function importJSON(input){
 
       save();
       saveHistory();
-      localStorage.setItem('hf2026_assignees_v9', JSON.stringify(assignees));
+      localStorage.setItem(`${LS}_assignees`, JSON.stringify(assignees));
 
       rebuildFilters();
       render();
@@ -3913,6 +3930,63 @@ function importJSON(input){
     }
   };
   reader.readAsText(file,'UTF-8');
+}
+
+/* ═══════════════ PROJECT SWITCHER ═══════════════ */
+function toggleProjectMenu(){
+  const menu=document.getElementById('projectMenu');
+  const btn=document.getElementById('projectMenuBtn');
+  const arrow=document.getElementById('projectMenuArrow');
+  if(menu.style.display!=='none'){ closeProjectMenu(); return; }
+
+  // メニュー内容を構築
+  menu.innerHTML=PROJECTS.map(p=>{
+    const isCurrent=p.id===CURRENT_PROJECT_ID;
+    return`<div style="padding:10px 16px;cursor:${isCurrent?'default':'pointer'};background:${isCurrent?'var(--accent-light)':'transparent'};border-left:3px solid ${isCurrent?'var(--accent)':'transparent'};transition:background .15s"
+      ${isCurrent?'':`onmouseenter="this.style.background='var(--bg2)'" onmouseleave="this.style.background='transparent'" onclick="switchProject('${p.id}','${p.name}')"`}>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:16px">${p.emoji}</span>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:${isCurrent?'var(--accent)':'var(--text)'}">${p.name}</div>
+          <div style="font-size:10px;color:var(--muted)">${p.date}${isCurrent?' ← 表示中':''}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('<div style="height:1px;background:var(--border)"></div>');
+
+  // ボタンの位置に合わせて表示
+  const rect=btn.getBoundingClientRect();
+  menu.style.top=(rect.bottom+4)+'px';
+  menu.style.left=rect.left+'px';
+  menu.style.display='block';
+  arrow.textContent='▲';
+
+  // 外クリックで閉じる
+  setTimeout(()=>{ document.addEventListener('click', _closeProjectMenuOutside, {once:true}); }, 0);
+}
+
+function _closeProjectMenuOutside(e){
+  if(!document.getElementById('projectMenu')?.contains(e.target) &&
+     !document.getElementById('projectMenuBtn')?.contains(e.target)){
+    closeProjectMenu();
+  }
+}
+
+function closeProjectMenu(){
+  document.getElementById('projectMenu').style.display='none';
+  document.getElementById('projectMenuArrow').textContent='▼';
+  document.removeEventListener('click', _closeProjectMenuOutside);
+}
+
+function switchProject(id, name){
+  closeProjectMenu();
+  const newUrl=location.origin+location.pathname+'?project='+id;
+  const openNew=confirm(`「${name}」のタスク票を\n別タブで開きますか？\n\n※ いいえ：このタブで切り替え`);
+  if(openNew){
+    window.open(newUrl, '_blank');
+  } else {
+    location.href=newUrl;
+  }
 }
 
 function toggleActionMenu(){
@@ -3988,7 +4062,7 @@ document.getElementById('viewContent').addEventListener('keydown',e=>{
 rebuildFilters();updateStats();render();
 // カウントダウン初期表示
 (()=>{
-  const honban=new Date('2026-09-06');
+  const honban=new Date(CURRENT_PROJECT.date);
   const today=new Date();today.setHours(0,0,0,0);honban.setHours(0,0,0,0);
   const diff=Math.round((honban-today)/(1000*60*60*24));
   const el=document.getElementById('sCountdownDays');
@@ -3998,6 +4072,21 @@ rebuildFilters();updateStats();render();
 loadFromSupabase();
 // ログイン確認
 initLogin();
+// プロジェクト名をUIに反映
+(()=>{
+  const pName=CURRENT_PROJECT.name;
+  const pEmoji=CURRENT_PROJECT.emoji;
+  document.title=`${pName} タスク管理`;
+  const t=document.getElementById('topbarTitle');
+  if(t) t.textContent=pName;
+  const lt=document.getElementById('loginTitle');
+  if(lt) lt.textContent=pName;
+  const pt=document.getElementById('pageTitle');
+  if(pt) pt.textContent=`${pName} タスク管理`;
+  // ロゴアイコンをプロジェクトの絵文字に
+  const logo=document.querySelector('.logo-icon-wrap');
+  if(logo) logo.textContent=pEmoji;
+})();
 
 </script>
 <!-- 共通フローティングメニュー -->
