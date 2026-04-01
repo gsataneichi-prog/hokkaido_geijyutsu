@@ -665,6 +665,11 @@ select option{background:#fff;}
         <option value="">── 選択または新規入力 ──</option>
       </select>
       <input class="form-input" id="fmCat" placeholder="新しい大項目名を入力" style="display:none" oninput="updateSubDropdown()">
+      <div id="fmCatColorRow" style="display:none;align-items:center;gap:8px;margin-top:4px">
+        <span style="font-size:11px;color:var(--muted);white-space:nowrap">背景色：</span>
+        <div id="fmCatColorSwatches" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+        <input type="color" id="fmCatColorCustom" style="width:28px;height:28px;border:none;border-radius:6px;cursor:pointer;padding:0" title="カスタム色">
+      </div>
       <datalist id="catList"></datalist>
     </div>
     <div class="form-group">
@@ -1117,13 +1122,15 @@ const INIT=[
 const MONTHS=['12月(前年)','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 const NOW_MONTH='3月';
 const HONBAN_MONTH='9月';
-const CAT_COLOR={
+const CAT_COLOR_DEFAULT={
   '草案':'#e85d26','組織':'#1a9e6e','申請':'#1d6fb8','保険':'#c97800',
   'チケット':'#d63a55','協賛':'#6d40cc','広報':'#d4367a','花火':'#b34a20',
   '舞台・制作':'#5b6dcc','会場':'#1a7a5e','駐車場':'#c97800','会場警備':'#2e7fb8',
   '地元':'#2d9c80','運営':'#4a5568','経理事務':'#6d7a8c','開催後':'#4a5568',
   '世界一たのしいゴミ拾い':'#1a9e6e'
 };
+let CAT_COLOR={...CAT_COLOR_DEFAULT,...JSON.parse(localStorage.getItem('hf2026_cat_colors')||'{}')};
+function saveCatColors(){localStorage.setItem('hf2026_cat_colors',JSON.stringify(CAT_COLOR));}
 const AVATAR_COLORS=['#e85d26','#1a9e6e','#1d6fb8','#c97800','#d63a55','#6d40cc','#d4367a','#b34a20','#5b6dcc'];
 const STATUS_CYCLE=['未','進行中','完了'];
 
@@ -1772,7 +1779,7 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
                 <button onclick="event.stopPropagation();confirmMoveCatGroup('${cat.replace(/'/g,"\\'")}','up')" style="font-size:9px;padding:1px 3px;border:1px solid var(--border);border-radius:3px;background:var(--surface);cursor:pointer;line-height:1" title="上へ">↑</button>
                 <button onclick="event.stopPropagation();confirmMoveCatGroup('${cat.replace(/'/g,"\\'")}','down')" style="font-size:9px;padding:1px 3px;border:1px solid var(--border);border-radius:3px;background:var(--surface);cursor:pointer;line-height:1" title="下へ">↓</button>
               </div>
-              <span class="cat-label-span" onclick="startCatRename(event,this.closest('.sch-cat-cell'))" style="font-size:${isMobile?'10px':'14px'};font-weight:700;color:${cc(cat)};font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:mixed;-webkit-text-orientation:mixed;letter-spacing:.1em;cursor:pointer" title="クリックで大項目名を変更">${cat}</span>
+              <span class="cat-label-span" onclick="startCatRename(event,this.closest('.sch-cat-cell'))" style="font-size:${isMobile?'10px':'14px'};font-weight:700;color:#1a2236;font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:mixed;-webkit-text-orientation:mixed;letter-spacing:.1em;cursor:pointer" title="クリックで大項目名を変更">${cat}</span>
             </div>
           </td>`;
           catFirst=false;
@@ -2694,6 +2701,33 @@ function closeRowMenus(){
 document.addEventListener('click', closeRowMenus);
 
 // 大項目が変わったら小項目ドロップダウンを更新
+// 色プリセット
+const CAT_COLOR_PRESETS=['#e85d26','#d63a55','#d4367a','#6d40cc','#1d6fb8','#1a9e6e','#2d9c80','#c97800','#b34a20','#5b6dcc','#4a5568','#2e7fb8'];
+let _pendingCatColor='';
+
+function _showCatColorPicker(defaultColor){
+  _pendingCatColor=defaultColor||CAT_COLOR_PRESETS[0];
+  const swatches=document.getElementById('fmCatColorSwatches');
+  if(!swatches) return;
+  swatches.innerHTML=CAT_COLOR_PRESETS.map(c=>`
+    <div onclick="_selectCatColor('${c}')" style="width:22px;height:22px;border-radius:5px;background:${c};cursor:pointer;border:2px solid ${c===_pendingCatColor?'#1a2236':'transparent'};transition:border .1s" data-color="${c}"></div>
+  `).join('');
+  const custom=document.getElementById('fmCatColorCustom');
+  if(custom){
+    custom.value=_pendingCatColor;
+    custom.oninput=()=>{ _selectCatColor(custom.value); };
+  }
+}
+
+function _selectCatColor(color){
+  _pendingCatColor=color;
+  document.querySelectorAll('#fmCatColorSwatches div').forEach(d=>{
+    d.style.border=`2px solid ${d.dataset.color===color?'#1a2236':'transparent'}`;
+  });
+  const custom=document.getElementById('fmCatColorCustom');
+  if(custom) custom.value=color;
+}
+
 // 大項目セレクトを現在のタスクから構築
 function _populateCatSelect(currentCat){
   const sel=document.getElementById('fmCatSelect');
@@ -2715,10 +2749,14 @@ function _populateCatSelect(currentCat){
 function onCatSelectChange(){
   const sel=document.getElementById('fmCatSelect');
   const inp=document.getElementById('fmCat');
+  const colorRow=document.getElementById('fmCatColorRow');
   if(sel.value==='__new__'){
     inp.style.display=''; inp.value=''; inp.focus();
+    _showCatColorPicker('');
+    if(colorRow) colorRow.style.display='flex';
   } else {
     inp.style.display='none'; inp.value=sel.value;
+    if(colorRow) colorRow.style.display='none';
   }
   updateSubDropdown();
 }
@@ -2775,6 +2813,8 @@ function startCatRename(e, td){
     if(newCat&&newCat!==oldCat){
       const affected=tasks.filter(t=>t.category===oldCat);
       affected.forEach(t=>{ t.category=newCat; });
+      // 色を引き継ぐ
+      if(CAT_COLOR[oldCat]){ CAT_COLOR[newCat]=CAT_COLOR[oldCat]; delete CAT_COLOR[oldCat]; saveCatColors(); }
       localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
       affected.forEach(t=>{
         _myRecentUpdates.add(t.id);
@@ -3152,6 +3192,9 @@ function openAddModal(){
   document.getElementById('fmCat').style.display='none';
   document.getElementById('fmSubSelect').innerHTML='<option value="">── 選択または新規入力 ──</option>';
   document.getElementById('fmSub').style.display='none';
+  const colorRow=document.getElementById('fmCatColorRow');
+  if(colorRow) colorRow.style.display='none';
+  _pendingCatColor=CAT_COLOR_PRESETS[0];
   _populateCatSelect('');
   setAssigneeValue('');
   document.getElementById('fmPriority').value='中';
@@ -3370,6 +3413,12 @@ function saveTask(){
     }
     const newTask={id:nextId++,...data,sort_order:insertOrder};
     tasks.push(newTask);
+    // 新大項目の場合、色を保存
+    const catSel2=document.getElementById('fmCatSelect');
+    if(catSel2&&catSel2.value==='__new__'&&_pendingCatColor){
+      CAT_COLOR[cat]=_pendingCatColor;
+      saveCatColors();
+    }
     // sort_orderを整数に振り直す
     tasks.sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
     tasks.forEach((t,i)=>{ t.sort_order=i; });
