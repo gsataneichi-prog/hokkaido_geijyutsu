@@ -1166,13 +1166,13 @@ function saveHistory(){
   localStorage.setItem(`${LS}_history`,JSON.stringify(historyLog.slice(-500)));
   // Supabaseに最新1件だけ追加
   const latest=historyLog[historyLog.length-1];
-  if(latest) sb.from('history').insert([{data:latest}]).then(()=>{}).catch(()=>{});
+  if(latest) sb.from('history').insert([{data:latest,project_id:CURRENT_PROJECT_ID}]).then(()=>{}).catch(()=>{});
 }
 
 // Supabaseから全履歴を読み込む
 async function loadHistoryFromSupabase(){
   try{
-    const {data}=await sb.from('history').select('*').order('id',{ascending:false}).limit(500);
+    const {data}=await sb.from('history').select('*').eq('project_id',CURRENT_PROJECT_ID).order('id',{ascending:false}).limit(500);
     if(data&&data.length>0){
       historyLog=data.map(r=>r.data).reverse();
       localStorage.setItem(`${LS}_history`,JSON.stringify(historyLog));
@@ -1189,28 +1189,26 @@ let manuals=JSON.parse(localStorage.getItem(`${LS}_manuals`)||'{}');
 // Supabaseからデータを読み込む
 async function loadFromSupabase(){
   try{
-    // タスク
-    const {data:tData}=await sb.from('tasks').select('*').order('id');
+    // タスク（プロジェクトでフィルター）
+    const {data:tData}=await sb.from('tasks').select('*').eq('project_id',CURRENT_PROJECT_ID).order('id');
     if(tData&&tData.length>0){
       tasks=tData.map(r=>r.data);
-      // sort_orderが未設定のタスクに順番を付ける
       let needsOrder=tasks.some(t=>t.sort_order===undefined);
       if(needsOrder) tasks.forEach((t,i)=>{if(t.sort_order===undefined)t.sort_order=i;});
       tasks.sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
       localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
-      // nextIdを現在の最大ID+1に更新（重複防止）
       const maxId=Math.max(...tasks.map(t=>t.id||0));
       if(maxId>=nextId) nextId=maxId+1;
     }
-    // メモ・コメント
-    const {data:mData}=await sb.from('manuals').select('*');
+    // メモ・コメント（プロジェクトでフィルター）
+    const {data:mData}=await sb.from('manuals').select('*').eq('project_id',CURRENT_PROJECT_ID);
     if(mData&&mData.length>0){
       manuals={};
       mData.forEach(r=>{manuals[r.task_id]=r.data;});
       localStorage.setItem(`${LS}_manuals`,JSON.stringify(manuals));
     }
-    // 担当者
-    const {data:aData}=await sb.from('assignees').select('*').order('id').limit(1);
+    // 担当者（プロジェクトでフィルター）
+    const {data:aData}=await sb.from('assignees').select('*').eq('project_id',CURRENT_PROJECT_ID).order('id').limit(1);
     if(aData&&aData.length>0){
       assignees=aData[0].names;
       localStorage.setItem(`${LS}_assignees`,JSON.stringify(assignees));
@@ -1230,8 +1228,8 @@ const _myRecentUpdates=new Set();
 
 // リアルタイム同期：他の人の変更を自動反映
 function setupRealtimeSync(){
-  sb.channel('realtime-'+Math.random().toString(36).slice(2))
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'tasks'},payload=>{
+  sb.channel('realtime-'+CURRENT_PROJECT_ID+'-'+Math.random().toString(36).slice(2))
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'tasks',filter:`project_id=eq.${CURRENT_PROJECT_ID}`},payload=>{
       const newTask=payload.new?.data;
       if(!newTask) return;
       if(_myRecentUpdates.has(newTask.id)){
@@ -1241,29 +1239,23 @@ function setupRealtimeSync(){
       const exists=tasks.find(t=>t.id===newTask.id);
       if(!exists) tasks.push(newTask);
       else tasks[tasks.findIndex(t=>t.id===newTask.id)]=newTask;
-      // nextIdを更新
       if(newTask.id>=nextId) nextId=newTask.id+1;
       localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
       rebuildFilters();
       if(currentTab==='schedule') renderKeepScroll(); else render();
       updateStats();
     })
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'tasks'},payload=>{
-      console.log('UPDATE received:', payload.new?.data?.id);
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'tasks',filter:`project_id=eq.${CURRENT_PROJECT_ID}`},payload=>{
       const newTask=payload.new?.data;
-      if(!newTask){ console.log('no data'); return; }
-      console.log('myRecentUpdates has?', _myRecentUpdates.has(newTask.id), [..._myRecentUpdates]);
+      if(!newTask) return;
       if(_myRecentUpdates.has(newTask.id)){
-        console.log('ignoring own update:', newTask.id);
         _myRecentUpdates.delete(newTask.id);
         return;
       }
-      console.log('processing update for id:', newTask.id, 'tab:', currentTab);
       const idx=tasks.findIndex(t=>t.id===newTask.id);
       if(idx>=0) tasks[idx]=newTask; else tasks.push(newTask);
       localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
       if(currentTab==='schedule'){
-        // sort_orderが変わった可能性がある場合はdebounceで並べ直し
         if(newTask.sort_order!==undefined){
           _scheduleReorderDebounce();
         } else {
@@ -1274,7 +1266,7 @@ function setupRealtimeSync(){
       }
       updateStats();
     })
-    .on('postgres_changes',{event:'DELETE',schema:'public',table:'tasks'},payload=>{
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'tasks',filter:`project_id=eq.${CURRENT_PROJECT_ID}`},payload=>{
       const delId=payload.old?.id;
       if(delId){
         tasks=tasks.filter(t=>t.id!==delId);
@@ -1284,7 +1276,7 @@ function setupRealtimeSync(){
         showSyncNotice('タスクが削除されました');
       }
     })
-    .on('postgres_changes',{event:'*',schema:'public',table:'manuals'},payload=>{
+    .on('postgres_changes',{event:'*',schema:'public',table:'manuals',filter:`project_id=eq.${CURRENT_PROJECT_ID}`},payload=>{
       const taskId=payload.new?.task_id;
       if(taskId){
         manuals[taskId]=payload.new.data;
@@ -1292,10 +1284,9 @@ function setupRealtimeSync(){
         if(currentTab==='schedule') patchScheduleRow(parseInt(taskId));
       }
     })
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'history'},payload=>{
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'history',filter:`project_id=eq.${CURRENT_PROJECT_ID}`},payload=>{
       const h=payload.new?.data;
       if(!h) return;
-      // 重複チェック（自分が追加したものは既にローカルにある）
       const exists=historyLog.some(x=>x.ts===h.ts&&x.taskId===h.taskId);
       if(!exists){
         historyLog.push(h);
@@ -1327,17 +1318,17 @@ async function saveToSupabase(changedTaskId=null, changedType='task'){
     if(changedType==='task'||changedType==='all'){
       if(changedTaskId){
         const t=tasks.find(x=>x.id===changedTaskId);
-        if(t) sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(e=>console.warn(e));
+        if(t) sb.from('tasks').upsert([{id:t.id,project_id:CURRENT_PROJECT_ID,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(e=>console.warn(e));
       } else {
-        sb.from('tasks').upsert(tasks.map(t=>({id:t.id,data:t,updated_at:new Date().toISOString()}))).then(()=>{}).catch(e=>console.warn(e));
+        sb.from('tasks').upsert(tasks.map(t=>({id:t.id,project_id:CURRENT_PROJECT_ID,data:t,updated_at:new Date().toISOString()}))).then(()=>{}).catch(e=>console.warn(e));
       }
     }
     if(changedType==='manual'||changedType==='all'){
-      const manualRows=Object.entries(manuals).map(([k,v])=>({task_id:parseInt(k),data:v,updated_at:new Date().toISOString()}));
+      const manualRows=Object.entries(manuals).map(([k,v])=>({task_id:parseInt(k),project_id:CURRENT_PROJECT_ID,data:v,updated_at:new Date().toISOString()}));
       if(manualRows.length) sb.from('manuals').upsert(manualRows).then(()=>{}).catch(e=>console.warn(e));
     }
     if(changedType==='assignees'||changedType==='all'){
-      sb.from('assignees').upsert([{id:1,names:assignees,updated_at:new Date().toISOString()}]).then(()=>{}).catch(e=>console.warn(e));
+      sb.from('assignees').upsert([{id:CURRENT_PROJECT_ID,project_id:CURRENT_PROJECT_ID,names:assignees,updated_at:new Date().toISOString()}]).then(()=>{}).catch(e=>console.warn(e));
     }
   }catch(e){
     console.warn('Supabase save failed:', e);
@@ -2411,9 +2402,9 @@ function _saveMonthStatusChange(id, month, from, to){
     localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
     localStorage.setItem(`${LS}_history`,JSON.stringify(historyLog.slice(-500)));
     var t2=tasks.find(function(x){return x.id===id;});
-    if(t2) sb.from('tasks').upsert([{id:t2.id,data:t2,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(){});
+    if(t2) sb.from('tasks').upsert([{id:t2.id,project_id:CURRENT_PROJECT_ID,data:t2,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(){});
     var latest=historyLog[historyLog.length-1];
-    if(latest) sb.from('history').insert([{data:latest}]).then(function(){}).catch(function(){});
+    if(latest) sb.from('history').insert([{data:latest,project_id:CURRENT_PROJECT_ID}]).then(function(){}).catch(function(){});
   },0);
 }
 
@@ -2675,7 +2666,7 @@ function moveSubGroup(sub, cat, dir){
   localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
   newCatPart.forEach(t=>{
     _myRecentUpdates.add(t.id);
-    sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
+    sb.from('tasks').upsert([{id:t.id,project_id:CURRENT_PROJECT_ID,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
   });
   renderKeepScroll();
 }
@@ -2837,7 +2828,7 @@ function moveCatGroup(cat, dir){
   localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
   tasks.forEach(t=>{
     _myRecentUpdates.add(t.id);
-    sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
+    sb.from('tasks').upsert([{id:t.id,project_id:CURRENT_PROJECT_ID,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
   });
   renderKeepScroll();
 }
@@ -2870,12 +2861,12 @@ function startCatRename(e, td){
       localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
       affected.forEach(t=>{
         _myRecentUpdates.add(t.id);
-        sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
+        sb.from('tasks').upsert([{id:t.id,project_id:CURRENT_PROJECT_ID,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
       });
       const latest={ts:Date.now(),taskId:affected[0]?.id,action:'大項目リネーム',detail:`「${oldCat}」→「${newCat}」`,user:currentUser||'不明'};
       historyLog.push(latest);
       localStorage.setItem(`${LS}_history`,JSON.stringify(historyLog));
-      sb.from('history').insert([{data:latest}]).then(()=>{}).catch(()=>{});
+      sb.from('history').insert([{data:latest,project_id:CURRENT_PROJECT_ID}]).then(()=>{}).catch(()=>{});
       renderKeepScroll();
     }
   }
@@ -2984,13 +2975,13 @@ function startSubRename(e, td){
       // Supabase保存
       affected.forEach(t=>{
         _myRecentUpdates.add(t.id);
-        sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
+        sb.from('tasks').upsert([{id:t.id,project_id:CURRENT_PROJECT_ID,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
       });
       // 履歴
       const latest={ts:Date.now(),taskId:affected[0]?.id,action:'小項目リネーム',detail:`「${oldSub}」→「${newSub}」`,user:currentUser||'不明'};
       historyLog.push(latest);
       localStorage.setItem(`${LS}_history`,JSON.stringify(historyLog));
-      sb.from('history').insert([{data:latest}]).then(()=>{}).catch(()=>{});
+      sb.from('history').insert([{data:latest,project_id:CURRENT_PROJECT_ID}]).then(()=>{}).catch(()=>{});
       renderKeepScroll();
     } else {
       labelDiv.style.display='';
@@ -3486,7 +3477,7 @@ function saveTask(){
         // 小項目が変わった場合はsort_orderが全タスクで変わるので全保存
         tasks.forEach(function(t){
           _myRecentUpdates.add(t.id);
-          sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(e){console.warn('save failed',e);});
+          sb.from('tasks').upsert([{id:t.id,project_id:CURRENT_PROJECT_ID,data:t,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(e){console.warn('save failed',e);});
         });
       } else {
         // 編集の場合は変更タスクだけ保存
@@ -3499,7 +3490,7 @@ function saveTask(){
       // 新規追加の場合はsort_orderが変わった全タスクを保存
       tasks.forEach(function(t){
         _myRecentUpdates.add(t.id);
-        sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(e){console.warn('save failed',e);});
+        sb.from('tasks').upsert([{id:t.id,project_id:CURRENT_PROJECT_ID,data:t,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(e){console.warn('save failed',e);});
       });
     }
   },0);
