@@ -758,6 +758,20 @@ select option{background:#fff;}
 </div>
 </div>
 
+<!-- ── Complete Date Modal ── -->
+<div class="modal-overlay" id="completeDateModal" style="display:none">
+<div class="confirm-modal" style="max-width:320px">
+  <div style="font-size:32px;margin-bottom:8px">🎉</div>
+  <h3 style="margin-bottom:6px">完了日を入力してください</h3>
+  <p id="completeDateLabel" style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5"></p>
+  <input type="date" id="completeDateInput" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text);background:var(--surface);outline:none;margin-bottom:20px;box-sizing:border-box;">
+  <div class="ca">
+    <button class="btn btn-ghost" onclick="cancelCompleteDate()" style="min-width:90px" title="キャンセルすると未に戻ります">キャンセル（未に戻す）</button>
+    <button class="btn btn-primary" onclick="confirmCompleteDate()" style="min-width:90px">決定</button>
+  </div>
+</div>
+</div>
+
 
 <!-- ── CSV Import Modal ── -->
 <div class="modal-overlay" id="csvImportModal" style="display:none" onclick="if(event.target.id==='csvImportModal')closeCsvImport()">
@@ -1273,8 +1287,8 @@ async function saveToSupabase(changedTaskId=null, changedType='task'){
 function taskStatus(t){
   const vals=Object.values(t.month_statuses||{});
   if(!vals.length) return '未';
-  if(vals.every(s=>s==='完了')) return '完了';
-  if(vals.some(s=>s==='進行中'||s==='完了')) return '進行中';
+  if(vals.every(s=>isDone(s))) return '完了';
+  if(vals.some(s=>s==='進行中'||isDone(s))) return '進行中';
   return '未';
 }
 function taskMonths(t){
@@ -1437,7 +1451,7 @@ function updateStats(){
   // 1回のループで全部カウント
   for(const t of tasks){
     const st=taskStatus(t);
-    if(st==='完了') done++;
+    if(isDone(st)) done++;
     else if(st==='進行中') wip++;
     else todo++;
     if(isDueThisMonth(t)) due++;
@@ -1490,7 +1504,7 @@ function setStatusFilter(s){
   ['all','todo','wip','done','due','overdue'].forEach(k=>{
     const el=document.getElementById('chip-'+k);
     if(el) el.classList.toggle('active',
-      (k==='all'&&!s&&!alertFilter)||(k==='todo'&&s==='未')||(k==='wip'&&s==='進行中')||(k==='done'&&s==='完了'));
+      (k==='all'&&!s&&!alertFilter)||(k==='todo'&&s==='未')||(k==='wip'&&s==='進行中')||(k==='done'&&isDone(s)));
   });
   render();
 }
@@ -1506,9 +1520,11 @@ function setAlertFilter(a){
 
 /* ═══════════════ HELPERS ═══════════════ */
 function cc(c){return CAT_COLOR[c]||'#4a5568';}
-function sc(s){return s==='完了'?'s-done':s==='進行中'?'s-wip':'s-todo';}
-function sl(s){return s==='完了'?'🟡 完了':s==='進行中'?'🟢 進行中':'🔴 未着手';}
-function scBar(s){return s==='完了'?'done':s==='進行中'?'wip':'todo';}
+function sc(s){return s==='完了'||s?.startsWith('完了:')?'s-done':s==='進行中'?'s-wip':'s-todo';}
+function sl(s){return s==='完了'||s?.startsWith('完了:')?'🟡 完了':s==='進行中'?'🟢 進行中':'🔴 未着手';}
+function scBar(s){return s==='完了'||s?.startsWith('完了:')?'done':s==='進行中'?'wip':'todo';}
+function isDone(s){return s==='完了'||s?.startsWith('完了:');}
+function doneDate(s){return s?.startsWith('完了:')?s.slice(3):'';}
 function avatarColor(n){let h=0;for(const c of n)h=(h*31+c.charCodeAt(0))%AVATAR_COLORS.length;return AVATAR_COLORS[h];}
 function hasManual(id){const m=manuals[id];return m&&(m.urls?.length||m.memo?.trim());}
 function hasComment(id){const m=manuals[id];return m&&m.comments&&m.comments.length>0;}
@@ -1733,7 +1749,7 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
         // 詳細・担当者セルの色：最初のステータス月の色を使う
         const allMIdx=MONTHS.map((m2,i2)=>ms[m2]?i2:-1).filter(i2=>i2>=0);
         const firstSt=allMIdx.length?ms[MONTHS[allMIdx[0]]]:'';
-        const rowBg=firstSt==='進行中'?'#a8e6c1':firstSt==='完了'?'#ffe066':'#fff';
+        const rowBg=firstSt==='進行中'?'#a8e6c1':isDone(firstSt)?'#ffe066':'#fff';
 
         // 詳細セル
         html+=`<td class="sch-label" style="position:sticky;left:${detLeft};z-index:15;width:${detW};min-width:${detW};vertical-align:middle;background:${rowBg}">
@@ -1761,17 +1777,18 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
           const allMonthIdxs=MONTHS.map((m2,i2)=>ms[m2]?i2:-1).filter(i2=>i2>=0);
           const nextStatusIdx=allMonthIdxs.find(i2=>i2>=mi);
           const nextSt=nextStatusIdx!==undefined?ms[MONTHS[nextStatusIdx]]:'';
-          const cellBg=nextSt==='進行中'?'#a8e6c1':nextSt==='完了'?'#ffe066':'';
+          const cellBg=nextSt==='進行中'?'#a8e6c1':isDone(nextSt)?'#ffe066':'';
           const isHonban=m==='9月(本番)';
 let cell=`<td class="sch-month-cell" data-month="${m}" style="text-align:center;padding:3px 2px;border-right:1px solid var(--border2);vertical-align:middle;min-width:72px;position:relative;z-index:0;background:${cellBg||(isHonban?'#ffe066':isNow?'rgba(232,93,38,.035)':'')}">`;
           if(hasStatus){
             const nowIdx2=MONTHS.indexOf(NOW_MONTH);
             const isLate=st==='未'&&mi<nowIdx2;
             const barClass=isLate?'late':scBar(st);
-            const barLabel=isLate?'⚠️ 遅':(st==='完了'?'🟡':st==='進行中'?'🟢':'🔴')+' '+st;
+            const barLabel=isLate?'⚠️ 遅':(isDone(st)?'🟡':st==='進行中'?'🟢':'🔴')+(isDone(st)?' 完了':' '+st);
+            const dd=doneDate(st);
             // 遅延セルは赤背景で上書き
             if(isLate) cell=cell.replace(/background:[^"]*"/,'background:#fde8ec"');
-            cell+=`<div class="sch-bar ${barClass}" onclick="toggleMonthStatus(${t.id},'${m}')" title="${m}：${isLate?'遅延':sl(st)}" style="cursor:pointer;font-size:10px">${barLabel}</div>`;
+            cell+=`<div class="sch-bar ${barClass}" onclick="toggleMonthStatus(${t.id},'${m}')" title="${m}：${isLate?'遅延':sl(st)}" style="cursor:pointer;font-size:10px">${barLabel}</div>${dd?`<div style="font-size:9px;color:#b38600;text-align:center;line-height:1.3;margin-top:1px">${dd}</div>`:''}`;
           } else if(inRange){
             cell+=`<div class="sch-mid-bar" ondblclick="addMonthStatus(${t.id},'${m}')" title="${m}にダブルクリックで追加" style="height:6px;background:${cc(cat)};opacity:.18;border-radius:2px;margin:10px 3px;cursor:pointer"></div>`;
           } else {
@@ -1808,7 +1825,7 @@ function renderHeatmap(){
       const g=grid[t.category][m];
       g.total++;
       const st=ms[m];
-      if(st==='完了') g.done++;
+      if(isDone(st)) g.done++;
       else if(st==='進行中') g.wip++;
       else if(st==='未'&&mi<MONTHS.indexOf(NOW_MONTH)) g.late++;
     });
@@ -2156,7 +2173,7 @@ function renderAssigneeDetail(name){
 
   const monthBar=MONTHS.map(m=>{
     const cnt=my.filter(t=>t.month_statuses&&t.month_statuses[m]).length;
-    const doneCnt=my.filter(t=>t.month_statuses&&t.month_statuses[m]==='完了').length;
+    const doneCnt=my.filter(t=>t.month_statuses&&isDone(t.month_statuses[m])).length;
     const isNow=m===NOW_MONTH;
     const isHonban=m===HONBAN_MONTH;
     const barH=cnt?Math.max(8,Math.round(cnt/my.length*80)):2;
@@ -2249,10 +2266,24 @@ function toggleMonthStatus(id, month){
   if(!t)return;
   if(!t.month_statuses) t.month_statuses={};
   const cur=t.month_statuses[month]||'未';
-  const next=STATUS_CYCLE[(STATUS_CYCLE.indexOf(cur)+1)%STATUS_CYCLE.length];
+  // 完了:XX月XX日 形式も '完了' として扱う
+  const curBase=isDone(cur)?'完了':cur;
+  const next=STATUS_CYCLE[(STATUS_CYCLE.indexOf(curBase)+1)%STATUS_CYCLE.length];
+
+  if(next==='完了'){
+    // 完了になるとき → 日付入力モーダルを出す（まだ保存しない）
+    openCompleteDateModal(id, month, cur);
+    return;
+  }
+
   t.month_statuses[month]=next;
-  if(next==='完了') firework();
-  // 変更履歴を記録
+  _saveMonthStatusChange(id, month, cur, next);
+}
+
+// 月ステータス変更の共通保存処理
+function _saveMonthStatusChange(id, month, from, to){
+  const t=tasks.find(x=>x.id===id);
+  if(!t)return;
   const now=new Date();
   const dateStr=`${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   historyLog.push({
@@ -2263,14 +2294,11 @@ function toggleMonthStatus(id, month){
     detail: (t.detail||'').split('\n')[0].slice(0,30),
     assignee: t.assignee||'未定',
     month: month,
-    from: cur,
-    to: next
+    from: from,
+    to: to
   });
-  // 自分の更新を記録
   _myRecentUpdates.add(id);
-  // DOMを即座に更新
   patchScheduleRow(id);
-  // 統計更新・保存は非同期で
   setTimeout(function(){
     updateStats();
     localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
@@ -2280,6 +2308,46 @@ function toggleMonthStatus(id, month){
     var latest=historyLog[historyLog.length-1];
     if(latest) sb.from('history').insert([{data:latest}]).then(function(){}).catch(function(){});
   },0);
+}
+
+// 完了日入力モーダル
+let _completeDatePending=null;
+function openCompleteDateModal(id, month, prevStatus){
+  const t=tasks.find(x=>x.id===id);
+  if(!t)return;
+  _completeDatePending={id, month, prevStatus};
+  const label=t.subcategory||t.detail?.split('\n')[0].slice(0,20)||'';
+  document.getElementById('completeDateLabel').textContent=`「${label}」/ ${month}`;
+  const today=new Date();
+  document.getElementById('completeDateInput').value=today.toISOString().slice(0,10);
+  document.getElementById('completeDateModal').style.display='flex';
+}
+function confirmCompleteDate(){
+  if(!_completeDatePending)return;
+  const {id,month,prevStatus}=_completeDatePending;
+  const raw=document.getElementById('completeDateInput').value;
+  if(!raw){alert('日付を選択してください');return;}
+  const d=new Date(raw);
+  const dateLabel=`${d.getMonth()+1}月${d.getDate()}日`;
+  const t=tasks.find(x=>x.id===id);
+  if(t){
+    t.month_statuses[month]=`完了:${dateLabel}`;
+    firework();
+    _saveMonthStatusChange(id, month, prevStatus, `完了:${dateLabel}`);
+  }
+  _completeDatePending=null;
+  document.getElementById('completeDateModal').style.display='none';
+}
+function cancelCompleteDate(){
+  if(!_completeDatePending)return;
+  const {id,month}=_completeDatePending;
+  const t=tasks.find(x=>x.id===id);
+  if(t){
+    t.month_statuses[month]='未';
+    _saveMonthStatusChange(id, month, '完了', '未');
+  }
+  _completeDatePending=null;
+  document.getElementById('completeDateModal').style.display='none';
 }
 
 let addMonthPending=null;
@@ -2334,7 +2402,7 @@ function patchScheduleRow(id){
   // 詳細・担当者セル：最初のステータス月の色
   const allMIdx=MONTHS.map((m2,i2)=>ms[m2]?i2:-1).filter(i2=>i2>=0);
   const firstSt=allMIdx.length?ms[MONTHS[allMIdx[0]]]:'';
-  const rowBg=firstSt==='進行中'?'#a8e6c1':firstSt==='完了'?'#ffe066':'#fff';
+  const rowBg=firstSt==='進行中'?'#a8e6c1':isDone(firstSt)?'#ffe066':'#fff';
 
   // 詳細セルを更新（小項目・詳細・※マニュアル参照・※詳細有）
   row.querySelectorAll('td.sch-label').forEach(td=>{
@@ -2398,12 +2466,13 @@ function patchScheduleRow(id){
     const isLate=st==='未'&&mIdx<nowIdx2;
     const nextIdx=allMIdx.find(i2=>i2>=mIdx);
     const nextSt=nextIdx!==undefined?ms[MONTHS[nextIdx]]:'';
-    const cellBg=isLate?'#fde8ec':(nextSt==='進行中'?'#a8e6c1':nextSt==='完了'?'#ffe066':(isHonban?'#ffe066':isNow?'rgba(232,93,38,.035)':''));
+    const cellBg=isLate?'#fde8ec':(nextSt==='進行中'?'#a8e6c1':isDone(nextSt)?'#ffe066':(isHonban?'#ffe066':isNow?'rgba(232,93,38,.035)':''));
     td.style.background=cellBg;
     if(st){
       const barClass=isLate?'late':scBar(st);
-      const barLabel=isLate?'⚠️ 遅':(st==='完了'?'🟡':st==='進行中'?'🟢':'🔴')+' '+st;
-      td.innerHTML=`<div class="sch-bar ${barClass}" onclick="toggleMonthStatus(${id},'${m}')" title="${m}：${isLate?'遅延':sl(st)}" style="cursor:pointer;font-size:10px">${barLabel}</div>`;
+      const barLabel=isLate?'⚠️ 遅':(isDone(st)?'🟡':st==='進行中'?'🟢':'🔴')+(isDone(st)?' 完了':' '+st);
+      const dd2=doneDate(st);
+      td.innerHTML=`<div class="sch-bar ${barClass}" onclick="toggleMonthStatus(${id},'${m}')" title="${m}：${isLate?'遅延':sl(st)}" style="cursor:pointer;font-size:10px">${barLabel}</div>${dd2?`<div style="font-size:9px;color:#b38600;text-align:center;line-height:1.3;margin-top:1px">${dd2}</div>`:''}`;
     } else {
       td.innerHTML=`<div class="sch-empty-cell" ondblclick="addMonthStatus(${id},'${m}')" style="height:26px;cursor:pointer"></div>`;
     }
