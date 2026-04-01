@@ -633,8 +633,11 @@ select option{background:#fff;}
   <div id="editTabPane1">
   <div class="form-row">
     <div class="form-group">
-      <label class="form-label">カテゴリ *</label>
-      <input class="form-input" id="fmCat" list="catList" placeholder="例: 草案" oninput="updateSubDropdown()">
+      <label class="form-label">カテゴリ（大項目）*</label>
+      <select class="form-input" id="fmCatSelect" onchange="onCatSelectChange()" style="margin-bottom:4px">
+        <option value="">── 選択または新規入力 ──</option>
+      </select>
+      <input class="form-input" id="fmCat" placeholder="新しい大項目名を入力" style="display:none" oninput="updateSubDropdown()">
       <datalist id="catList"></datalist>
     </div>
     <div class="form-group">
@@ -1725,9 +1728,13 @@ const monthHeadCells=MONTHS.map(m=>`<th style="min-width:72px;padding:8px 4px;fo
 
         // 大項目（catFirst）
         if(catFirst){
-          html+=`<td rowspan="${catRowspan}" class="sch-cat-cell" style="background:${cc(cat)}18;border-right:2px solid ${cc(cat)};${CAT_BORDER};vertical-align:middle;text-align:center;position:sticky;left:0;z-index:10;width:${catW};min-width:${catW};box-shadow:2px 0 0 #b0b8c8">
-            <div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:40px">
-              <span style="font-size:${isMobile?'10px':'14px'};font-weight:700;color:${cc(cat)};font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:mixed;-webkit-text-orientation:mixed;letter-spacing:.1em">${cat}</span>
+          html+=`<td rowspan="${catRowspan}" class="sch-cat-cell" data-cat="${cat.replace(/"/g,'&quot;')}" style="background:${cc(cat)}18;border-right:2px solid ${cc(cat)};${CAT_BORDER};vertical-align:middle;text-align:center;position:sticky;left:0;z-index:10;width:${catW};min-width:${catW};box-shadow:2px 0 0 #b0b8c8">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;min-height:40px;gap:2px">
+              <div class="cat-move-btns" style="display:none;flex-direction:column;gap:1px">
+                <button onclick="event.stopPropagation();confirmMoveCatGroup('${cat.replace(/'/g,"\\'")}','up')" style="font-size:9px;padding:1px 3px;border:1px solid var(--border);border-radius:3px;background:var(--surface);cursor:pointer;line-height:1" title="上へ">↑</button>
+                <button onclick="event.stopPropagation();confirmMoveCatGroup('${cat.replace(/'/g,"\\'")}','down')" style="font-size:9px;padding:1px 3px;border:1px solid var(--border);border-radius:3px;background:var(--surface);cursor:pointer;line-height:1" title="下へ">↓</button>
+              </div>
+              <span class="cat-label-span" onclick="startCatRename(event,this.closest('.sch-cat-cell'))" style="font-size:${isMobile?'10px':'14px'};font-weight:700;color:${cc(cat)};font-family:'Hiragino Maru Gothic Pro','ヒラギノ丸ゴ Pro W4',sans-serif;writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:mixed;-webkit-text-orientation:mixed;letter-spacing:.1em;cursor:pointer" title="クリックで大項目名を変更">${cat}</span>
             </div>
           </td>`;
           catFirst=false;
@@ -2646,8 +2653,110 @@ function closeRowMenus(){
 document.addEventListener('click', closeRowMenus);
 
 // 大項目が変わったら小項目ドロップダウンを更新
+// 大項目セレクトを現在のタスクから構築
+function _populateCatSelect(currentCat){
+  const sel=document.getElementById('fmCatSelect');
+  const inp=document.getElementById('fmCat');
+  const cats=[];
+  tasks.forEach(t=>{ if(t.category&&!cats.includes(t.category)) cats.push(t.category); });
+  sel.innerHTML='<option value="">── 選択または新規入力 ──</option>';
+  cats.forEach(c=>{ sel.innerHTML+=`<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`; });
+  sel.innerHTML+='<option value="__new__">＋ 新しい大項目を追加</option>';
+  if(currentCat&&cats.includes(currentCat)){
+    sel.value=currentCat; inp.style.display='none';
+  } else if(currentCat){
+    sel.value='__new__'; inp.style.display=''; inp.value=currentCat;
+  } else {
+    sel.value=''; inp.style.display='none'; inp.value='';
+  }
+  updateSubDropdown();
+}
+function onCatSelectChange(){
+  const sel=document.getElementById('fmCatSelect');
+  const inp=document.getElementById('fmCat');
+  if(sel.value==='__new__'){
+    inp.style.display=''; inp.value=''; inp.focus();
+  } else {
+    inp.style.display='none'; inp.value=sel.value;
+  }
+  updateSubDropdown();
+}
+
+// 大項目グループごと上下移動
+function moveCatGroup(cat, dir){
+  const cats=[];
+  tasks.forEach(t=>{ if(!cats.includes(t.category)) cats.push(t.category); });
+  const idx=cats.indexOf(cat);
+  if(dir==='up'&&idx<=0) return;
+  if(dir==='down'&&idx>=cats.length-1) return;
+  const swapWith=cats[dir==='up'?idx-1:idx+1];
+  // catグループとswapWithグループを入れ替え
+  const groups={};
+  const order=[];
+  tasks.forEach(t=>{
+    if(!groups[t.category]){ groups[t.category]=[]; order.push(t.category); }
+    groups[t.category].push(t);
+  });
+  const a=order.indexOf(cat), b=order.indexOf(swapWith);
+  order[a]=swapWith; order[b]=cat;
+  const newTasks=[];
+  order.forEach(c=>newTasks.push(...groups[c]));
+  tasks.length=0; newTasks.forEach(t=>tasks.push(t));
+  tasks.forEach((t,i)=>{ t.sort_order=i; });
+  localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+  tasks.forEach(t=>{
+    _myRecentUpdates.add(t.id);
+    sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
+  });
+  renderKeepScroll();
+}
+
+// 大項目リネーム
+function startCatRename(e, td){
+  e.stopPropagation();
+  if(!td) return;
+  const oldCat=td.dataset.cat;
+  if(!oldCat||td.querySelector('.cat-rename-input')) return;
+  const span=td.querySelector('.cat-label-span');
+  if(!span) return;
+  const inp=document.createElement('input');
+  inp.className='cat-rename-input';
+  inp.value=oldCat;
+  inp.style.cssText='width:90%;font-size:11px;font-weight:700;border:1.5px solid var(--accent);border-radius:4px;padding:3px 4px;text-align:center;font-family:inherit;background:#fff;outline:none;writing-mode:horizontal-tb;box-sizing:border-box;';
+  span.style.display='none';
+  td.querySelector('div').appendChild(inp);
+  inp.focus(); inp.select();
+  let committed=false;
+  function commit(){
+    if(committed) return; committed=true;
+    const newCat=inp.value.trim();
+    inp.remove(); span.style.display='';
+    if(newCat&&newCat!==oldCat){
+      const affected=tasks.filter(t=>t.category===oldCat);
+      affected.forEach(t=>{ t.category=newCat; });
+      localStorage.setItem('hf2026_v10',JSON.stringify(tasks));
+      affected.forEach(t=>{
+        _myRecentUpdates.add(t.id);
+        sb.from('tasks').upsert([{id:t.id,data:t,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
+      });
+      const latest={ts:Date.now(),taskId:affected[0]?.id,action:'大項目リネーム',detail:`「${oldCat}」→「${newCat}」`,user:'自分'};
+      historyLog.push(latest);
+      localStorage.setItem('hf2026_history_v1',JSON.stringify(historyLog));
+      sb.from('history').insert([{data:latest}]).then(()=>{}).catch(()=>{});
+      renderKeepScroll();
+    }
+  }
+  inp.addEventListener('keydown',e2=>{
+    if(e2.key==='Enter'){ e2.preventDefault(); commit(); }
+    if(e2.key==='Escape'){ committed=true; inp.remove(); span.style.display=''; }
+  });
+  inp.addEventListener('blur', commit);
+}
+
 function updateSubDropdown(){
-  const cat=document.getElementById('fmCat').value.trim();
+  const catSel=document.getElementById('fmCatSelect');
+  const catInp=document.getElementById('fmCat');
+  const cat=(catSel&&catSel.value&&catSel.value!=='__new__')?catSel.value:catInp.value.trim();
   const sel=document.getElementById('fmSubSelect');
   const inp=document.getElementById('fmSub');
   // 現在の選択値を保持
@@ -2693,6 +2802,12 @@ function confirmMoveSubGroup(sub, cat, dir){
   const label=dir==='up'?'上':'下';
   if(!confirm(`「${sub}」グループを${label}に移動してもよいですか？`)) return;
   moveSubGroup(sub, cat, dir);
+}
+
+function confirmMoveCatGroup(cat, dir){
+  const label=dir==='up'?'上':'下';
+  if(!confirm(`「${cat}」グループを${label}に移動してもよいですか？`)) return;
+  moveCatGroup(cat, dir);
 }
 
 // 小項目セルにホバーで↑↓を表示・ボタンにイベント登録
@@ -2771,7 +2886,16 @@ function initSubMoveBtns(){
   });
 }
 
-function initDragDrop(){ initSubMoveBtns(); }
+function initDragDrop(){ initSubMoveBtns(); initCatMoveBtns(); }
+
+function initCatMoveBtns(){
+  document.querySelectorAll('td.sch-cat-cell').forEach(td=>{
+    const btns=td.querySelector('.cat-move-btns');
+    if(!btns) return;
+    td.addEventListener('mouseenter',()=>{ btns.style.display='flex'; });
+    td.addEventListener('mouseleave',()=>{ btns.style.display='none'; });
+  });
+}
 
 /* 担当者インライン変更 */
 function openAssigneePicker(id, td){
@@ -2980,8 +3104,10 @@ function openAddModal(){
   const info=document.getElementById('modalTaskInfo');
   if(info) info.style.display='none';
   ['fmCat','fmSub','fmDetail'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fmCat').style.display='none';
   document.getElementById('fmSubSelect').innerHTML='<option value="">── 選択または新規入力 ──</option>';
   document.getElementById('fmSub').style.display='none';
+  _populateCatSelect('');
   setAssigneeValue('');
   document.getElementById('fmPriority').value='中';
   renderMonthEditor({});
@@ -3008,6 +3134,7 @@ function openEdit(id){
     document.getElementById('modalTaskDetail').textContent=bullet.slice(0,60)+(bullet.length>60?'…':'');
   }
   document.getElementById('fmCat').value=t.category;
+  _populateCatSelect(t.category);
   // 小項目ドロップダウンを大項目に合わせて更新してから値をセット
   updateSubDropdown();
   const subSel=document.getElementById('fmSubSelect');
@@ -3141,7 +3268,9 @@ function renderMonthEditor(ms){
 
 function closeModal(){document.getElementById('editModal').style.display='none';}
 function saveTask(){
-  const cat=document.getElementById('fmCat').value.trim();
+  const catSel=document.getElementById('fmCatSelect');
+  const catInp=document.getElementById('fmCat');
+  const cat=(catSel.value==='__new__'||catSel.value===''?catInp.value.trim():catSel.value);
   const detail=document.getElementById('fmDetail').value.trim();
   if(!cat||!detail){alert('カテゴリと詳細は必須です');return;}
   const ms=document.getElementById('monthStatusEditor')._ms||{};
