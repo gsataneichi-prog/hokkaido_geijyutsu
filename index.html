@@ -1978,78 +1978,113 @@ function renderHeatmap(){
 /* ═══════════════ HELP VIEW ═══════════════ */
 function renderHelp(){
   function row(op,desc){
-    return`<div style="display:flex;gap:12px;padding:8px 10px;background:var(--bg2);border-radius:8px;align-items:center">
-      <div style="font-size:12px;font-weight:700;color:var(--accent);min-width:170px;flex-shrink:0">${op}</div>
-      <div style="font-size:12px;color:var(--text2)">${desc}</div>
+    return`<div style="display:flex;gap:12px;padding:9px 10px;background:var(--bg2);border-radius:8px;align-items:flex-start">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);min-width:190px;flex-shrink:0;padding-top:1px">${op}</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">${desc}</div>
     </div>`;
   }
-  function section(title,rows){
+  function section(emoji,title,rows){
     return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
-      <h3 style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">${title}</h3>
-      <div style="display:flex;flex-direction:column;gap:8px">${rows.map(r=>row(r[0],r[1])).join('')}</div>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px"><span>${emoji}</span>${title}</h3>
+      <div style="display:flex;flex-direction:column;gap:7px">${rows.map(r=>row(r[0],r[1])).join('')}</div>
     </div>`;
   }
 
-  return`<div style="padding:24px;max-width:800px;margin:0 auto">
-    <h2 style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:20px">❓ 使い方ガイド</h2>
+  return`<div style="padding:24px;max-width:820px;margin:0 auto">
+    <h2 style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px">❓ 使い方ガイド</h2>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:20px">北海道芸術花火 2026 タスク管理ツール — 全機能一覧</p>
 
-    <!-- 凡例 -->
+    <!-- ステータス凡例 -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
-      <h3 style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">🎨 ステータスの色</h3>
-      <div style="display:flex;flex-wrap:wrap;gap:12px">
-        <div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:16px;border-radius:4px;background:#fde8ec;border:1px solid #f5c0cb"></div><span style="font-size:12px">未着手</span></div>
-        <div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:16px;border-radius:4px;background:#a8e6c1"></div><span style="font-size:12px">進行中</span></div>
-        <div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:16px;border-radius:4px;background:#ffe066"></div><span style="font-size:12px">完了</span></div>
-        <div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:16px;border-radius:4px;background:#d63a55"></div><span style="font-size:12px;color:#d63a55;font-weight:700">⚠️ 遅延</span></div>
-        <div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:16px;border-radius:4px;background:#ffe066;border:2px solid #b38600"></div><span style="font-size:12px">★ 本番月(9月)</span></div>
-        <div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:16px;border-radius:4px;background:#fff0eb;border:2px solid var(--accent)"></div><span style="font-size:12px">◀ 現在月(3月)</span></div>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px">🎨 ステータスの色</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:14px">
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:36px;height:18px;border-radius:4px;background:#fde8ec;border:1px solid #f5c0cb"></div><span style="font-size:12px">🔴 未着手</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:36px;height:18px;border-radius:4px;background:#a8e6c1"></div><span style="font-size:12px">🟢 進行中</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:36px;height:18px;border-radius:4px;background:#ffe066"></div><span style="font-size:12px">🟡 完了</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:36px;height:18px;border-radius:4px;background:#d63a55"></div><span style="font-size:12px;color:#d63a55;font-weight:700">⚠️ 遅延</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:36px;height:18px;border-radius:4px;background:#ffe066;border:2px solid #b38600"></div><span style="font-size:12px">本番月（9月）</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:36px;height:18px;border-radius:4px;background:#fff0eb;border:2px solid var(--accent)"></div><span style="font-size:12px">◀ 現在月</span></div>
       </div>
     </div>
 
-    ${section('📅 スケジュール表の操作',[
-      ['クリック（月セル）','ステータスを切り替え（未→進行中→完了→未）'],
-      ['ダブルクリック（月セル）','新しい月にステータスを追加'],
-      ['クリック（担当者欄）','担当者をプルダウンで変更'],
-      ['💬 ボタン','コメント・メモ・参照URLを入力・確認'],
-      ['🗑 ボタン','タスクを削除'],
+    ${section('👤','ログイン・ユーザー管理',[
+      ['起動時の名前選択','ページを開くと担当者一覧が表示されます。自分の名前を選んでログインしてください'],
+      ['ログイン状態の維持','ブラウザを閉じても次回開いたとき自動でログイン状態が維持されます'],
+      ['トップバーのユーザー名','右上に現在ログイン中の名前が表示されます'],
+      ['ログアウト（✕ボタン）','トップバーの名前の横の ✕ を押すと名前選択画面に戻ります'],
     ])}
 
-    ${section('🔍 フィルター・検索',[
-      ['▲折りたたむ / ▼展開','検索・フィルター欄を表示/非表示'],
+    ${section('📅','スケジュール表の基本操作',[
+      ['月セルをクリック','ステータスを順番に切り替え（未着手 → 進行中 → 完了）'],
+      ['完了にしたとき','完了日を入力するカレンダーが表示されます。日付を選んで「決定」。間違えた場合は「キャンセル（未に戻す）」で未着手に戻ります'],
+      ['完了日の表示','完了バーの下に「◯月◯日」と小さく表示されます'],
+      ['月セルをダブルクリック','空白の月に新しくステータスを追加します'],
+      ['担当者欄をクリック','プルダウンで担当者を変更できます'],
+      ['☰ ボタン（各行）','行ごとの操作メニュー（編集・コメント・削除・上下移動）を開きます'],
+    ])}
+
+    ${section('➕','タスクの追加・編集',[
+      ['＋ タスク追加ボタン','新しいタスクを追加します'],
+      ['大項目（カテゴリ）','既存の大項目から選ぶか「＋ 新しい大項目を追加」で新規作成。新規作成時は背景色をカラーパレットから選べます'],
+      ['小項目','選んだ大項目に応じてドロップダウンが自動更新。「＋ 新しい小項目を追加」で新規作成も可能'],
+      ['詳細の書き方','● で始まる行がメインタスク名、・ で始まる行が補足項目として表示されます'],
+      ['マニュアル参照URL','関連するURLを登録すると詳細欄に「※マニュアル参照」リンクが表示されます'],
+      ['編集モーダル（✏️）','基本情報タブで内容・小項目・大項目を変更。小項目を変えると自動で別グループに移動します'],
+    ])}
+
+    ${section('💬','コメント・メモ機能',[
+      ['コメントを開く','☰メニューの「💬 コメント」または行の 💬 ボタンをクリック'],
+      ['投稿者','ログイン中のユーザー名が自動でセットされます（変更不可）'],
+      ['宛先の設定','「全員」または特定の担当者を宛先に指定して送れます'],
+      ['自分宛バッジ','自分宛（または全員宛）の未読コメントがあると、トップバーに紫バッジ「💬 〇件の新着」が表示されます'],
+      ['バッジをクリック','未読コメントの一覧を確認。タスク名をクリックでその行に移動します'],
+      ['自分宛コメントの見た目','コメント一覧で自分宛のコメントは紫の左ボーダーでハイライトされます'],
+    ])}
+
+    ${section('🗂️','大項目・小項目の管理',[
+      ['大項目のリネーム','スケジュール表の大項目（縦文字の列）をクリックすると名前を変更できます。同じ大項目の全タスクが一括で変わります。Enterで確定、Escでキャンセル'],
+      ['大項目の移動','大項目列にカーソルを当てると ↑↓ ボタンが出ます。確認ダイアログ後に移動します'],
+      ['小項目のリネーム','スケジュール表の小項目セルをクリックすると名前を変更できます。同じ小項目の全タスクが一括で変わります。Shift+Enterで改行も可能'],
+      ['小項目の移動','小項目セルにカーソルを当てると ↑↓ ボタンが出ます。確認後に移動します'],
+      ['行の移動','☰メニューから「↑ 上に移動」「↓ 下に移動」で同じ小項目グループ内での順番を変えられます'],
+    ])}
+
+    ${section('🔍','フィルター・検索',[
       ['テキスト検索','タスク名・担当者・詳細でキーワード検索'],
-      ['カテゴリ / 担当者 / 月','プルダウンで絞り込み（未定も選択可能）'],
-      ['📅 今月期限','今月（3月）が期限のタスクを絞り込み'],
+      ['カテゴリ / 担当者 / 月','プルダウンで絞り込み（複数条件の組み合わせも可）'],
+      ['ステータスバッジ','トップバーの「未着手」「進行中」「完了」をクリックでフィルター'],
+      ['今月期限','今月が期限のタスクを絞り込み'],
       ['⚠️ 遅延','期限が過ぎた未着手タスクを絞り込み'],
+      ['▲▼ 折りたたみボタン','検索・フィルター欄を表示/非表示にします'],
     ])}
 
-    ${section('💬 コメント・メモ機能',[
-      ['💬 ボタンをクリック','コメント・メモ・参照URLの入力画面を開く'],
-      ['コメント投稿','担当者を選んで投稿。投稿ボタンのみで送信（Enterキー無効）'],
-      ['未読通知','新着コメントは左上に紫バッジ「💬 〇件の新着」で表示'],
-      ['バッジをクリック','未読コメント一覧を確認。クリックで対象タスクへ移動'],
-    ])}
-
-    ${section('📑 タブ説明',[
-      ['📅 スケジュール','全タスクのガントチャート（メイン画面）'],
-      ['🗓 タイムライン','カテゴリ×月のヒートマップで全体把握'],
-      ['📂 カテゴリ別','大項目ごとのタスク一覧と進捗バー'],
-      ['👥 担当者管理','担当者ごとのタスク・進捗・月別分布を確認'],
-      ['📜 変更履歴','誰がいつステータスを変更したか全履歴'],
-      ['❓ ヘルプ','この画面'],
+    ${section('📑','タブ説明',[
+      ['📅 スケジュール','全タスクの月別進捗表（メイン画面）'],
+      ['🗓 タイムライン','カテゴリ×月のヒートマップで全体進捗を把握'],
+      ['📂 カテゴリ別','大項目ごとのタスク一覧と完了率バー'],
+      ['👥 担当者管理','担当者ごとのタスク数・進捗・月別分布を確認。担当者の追加・削除も可能'],
+      ['📜 変更履歴','誰がいつどのタスクのステータスを変更したか全履歴を記録'],
       ['📊 総合スプレッドシート','Googleスプレッドシートを新しいタブで開く'],
+      ['❓ ヘルプ','この画面'],
     ])}
 
-    ${section('⚙️ メニューボタンの機能',[
+    ${section('⚙️','メニューボタンの機能',[
       ['📥 CSV出力','タスク一覧をExcel形式で保存'],
       ['📤 CSVインポート','CSVからタスクを一括追加・更新'],
-      ['💾 バックアップ','全データをJSONで保存（定期的に推奨）'],
+      ['💾 バックアップ','全データをJSONファイルで保存（定期的に推奨）'],
       ['♻️ 復元','バックアップJSONから全データを復元'],
-      ['🖨️ 印刷/PDF','スケジュール表を印刷・PDF出力'],
+      ['🖨️ 印刷/PDF','スケジュール表を印刷またはPDF出力'],
+    ])}
+
+    ${section('🔄','リアルタイム共有について',[
+      ['自動同期','チームメンバーが変更すると、自分の画面にも自動で反映されます（数秒以内）'],
+      ['接続状態','ロゴ横の小さな丸が緑 = 接続中、黄色 = 接続中断'],
+      ['スクロール位置','他のメンバーが更新しても、自分のスクロール位置はそのまま維持されます'],
     ])}
 
     <!-- 関連リンク -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px">
-      <h3 style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">🔗 関連リンク</h3>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px">🔗 関連リンク</h3>
       <a href="https://docs.google.com/spreadsheets/d/1WcX6rRLT4klRqcO48rApdF2CEJf1vO_-Y5Ih3x86VDY/edit?usp=sharing" target="_blank"
         style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg2);border-radius:8px;text-decoration:none;border:1px solid var(--border);transition:border-color .18s"
         onmouseover="this.style.borderColor='#16a34a'" onmouseout="this.style.borderColor='var(--border)'">
