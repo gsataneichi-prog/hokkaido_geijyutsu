@@ -3991,16 +3991,10 @@ function toggleProjectMenu(){
   // ボタンの位置に合わせて表示
   const isMobile=window.innerWidth<=768;
   if(isMobile){
-    menu.style.bottom='56px';
-    menu.style.top='auto';
-    menu.style.left='auto';
-    menu.style.right='8px';
+    menu.style.cssText='display:block;position:fixed;left:8px;right:8px;bottom:56px;top:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 -4px 20px rgba(0,0,0,.25);z-index:99999;min-width:200px;overflow:hidden;';
   } else {
     const rect=btn.getBoundingClientRect();
-    menu.style.bottom='auto';
-    menu.style.top=(rect.bottom+4)+'px';
-    menu.style.left=rect.left+'px';
-    menu.style.right='auto';
+    menu.style.cssText=`display:block;position:fixed;top:${rect.bottom+4}px;left:${rect.left}px;bottom:auto;right:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.18);z-index:9999;min-width:200px;overflow:hidden;`;
   }
   menu.style.display='block';
   arrow.textContent='▲';
@@ -4038,22 +4032,19 @@ function toggleActionMenu(){
   const btn=document.getElementById('menuToggleBtn');
   const arrow=document.getElementById('menuArrow');
   const open=menu.style.display==='none';
-  menu.style.display=open?'block':'none';
   if(open){
     const isMobile=window.innerWidth<=768;
     if(isMobile){
-      // モバイル：画面下から上に表示
-      menu.style.bottom='56px';
-      menu.style.top='auto';
-      menu.style.left='8px';
-      menu.style.right='auto';
-    } else if(btn){
-      const r=btn.getBoundingClientRect();
-      menu.style.bottom='auto';
-      menu.style.top=(r.bottom+6)+'px';
-      menu.style.right=(window.innerWidth-r.right)+'px';
-      menu.style.left='auto';
+      menu.style.cssText='display:block;position:fixed;left:8px;right:8px;bottom:56px;top:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 -4px 20px rgba(0,0,0,.25);z-index:99999;min-width:160px;overflow:hidden;';
+    } else {
+      menu.style.display='block';
+      if(btn){
+        const r=btn.getBoundingClientRect();
+        menu.style.cssText=`display:block;position:fixed;top:${r.bottom+6}px;right:${window.innerWidth-r.right}px;bottom:auto;left:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.18);z-index:9999;min-width:160px;overflow:hidden;`;
+      }
     }
+  } else {
+    menu.style.display='none';
   }
   if(arrow) arrow.textContent=open?'▲':'▼';
 }
