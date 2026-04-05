@@ -3989,9 +3989,19 @@ function toggleProjectMenu(){
   }).join('<div style="height:1px;background:var(--border)"></div>');
 
   // ボタンの位置に合わせて表示
-  const rect=btn.getBoundingClientRect();
-  menu.style.top=(rect.bottom+4)+'px';
-  menu.style.left=rect.left+'px';
+  const isMobile=window.innerWidth<=768;
+  if(isMobile){
+    menu.style.bottom='56px';
+    menu.style.top='auto';
+    menu.style.left='auto';
+    menu.style.right='8px';
+  } else {
+    const rect=btn.getBoundingClientRect();
+    menu.style.bottom='auto';
+    menu.style.top=(rect.bottom+4)+'px';
+    menu.style.left=rect.left+'px';
+    menu.style.right='auto';
+  }
   menu.style.display='block';
   arrow.textContent='▲';
 
@@ -4029,10 +4039,21 @@ function toggleActionMenu(){
   const arrow=document.getElementById('menuArrow');
   const open=menu.style.display==='none';
   menu.style.display=open?'block':'none';
-  if(open&&btn){
-    const r=btn.getBoundingClientRect();
-    menu.style.top=(r.bottom+6)+'px';
-    menu.style.right=(window.innerWidth-r.right)+'px';
+  if(open){
+    const isMobile=window.innerWidth<=768;
+    if(isMobile){
+      // モバイル：画面下から上に表示
+      menu.style.bottom='56px';
+      menu.style.top='auto';
+      menu.style.left='8px';
+      menu.style.right='auto';
+    } else if(btn){
+      const r=btn.getBoundingClientRect();
+      menu.style.bottom='auto';
+      menu.style.top=(r.bottom+6)+'px';
+      menu.style.right=(window.innerWidth-r.right)+'px';
+      menu.style.left='auto';
+    }
   }
   if(arrow) arrow.textContent=open?'▲':'▼';
 }
