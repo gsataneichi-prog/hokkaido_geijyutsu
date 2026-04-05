@@ -4027,6 +4027,48 @@ function switchProject(id, name){
   }
 }
 
+/* ── モバイルボトムバー ── */
+function closeMobilePanel(){
+  document.getElementById('mobileMenuPanel').style.display='none';
+  document.getElementById('mobileProjectPanel').style.display='none';
+}
+function toggleMobileMenu(){
+  const mp=document.getElementById('mobileMenuPanel');
+  const pp=document.getElementById('mobileProjectPanel');
+  const isOpen=mp.style.display!=='none';
+  pp.style.display='none';
+  mp.style.display=isOpen?'none':'block';
+}
+function toggleMobileProject(){
+  const mp=document.getElementById('mobileMenuPanel');
+  const pp=document.getElementById('mobileProjectPanel');
+  const isOpen=pp.style.display!=='none';
+  mp.style.display='none';
+  if(isOpen){ pp.style.display='none'; return; }
+  // プロジェクト一覧を構築
+  pp.innerHTML=PROJECTS.map(p=>{
+    const isCurrent=p.id===CURRENT_PROJECT_ID;
+    return`<div style="padding:12px 20px;cursor:${isCurrent?'default':'pointer'};background:${isCurrent?'var(--accent-light)':'transparent'};border-left:3px solid ${isCurrent?'var(--accent)':'transparent'}"
+      ${isCurrent?'':`onclick="switchProject('${p.id}','${p.name}')"`}>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">${p.emoji}</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:${isCurrent?'var(--accent)':'var(--text)'}">${p.name}</div>
+          <div style="font-size:11px;color:var(--muted)">${isCurrent?'← 表示中':p.date}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('<div style="height:1px;background:var(--border)"></div>');
+  pp.style.display='block';
+}
+// パネル外タップで閉じる
+document.addEventListener('click',e=>{
+  const bar=document.getElementById('mobileBottomBar');
+  if(bar&&!bar.contains(e.target)){
+    closeMobilePanel();
+  }
+});
+
 function toggleActionMenu(){
   const menu=document.getElementById('actionMenu');
   const btn=document.getElementById('menuToggleBtn');
@@ -4137,10 +4179,23 @@ initLogin();
 </script>
 <!-- 共通フローティングメニュー -->
 <!-- ── モバイル用フローティングボトムバー ── -->
-<div class="mobile-bottom-bar">
-  <button class="btn btn-primary" onclick="openAddModal()">＋ タスク追加</button>
-  <button class="btn btn-ghost" onclick="toggleActionMenu()" style="position:relative">⚙️ メニュー</button>
-  <button class="btn btn-ghost" onclick="toggleProjectMenu()" style="color:var(--blue);border-color:var(--blue)">🎆 大会</button>
+<div class="mobile-bottom-bar" id="mobileBottomBar">
+  <!-- メニュー展開パネル -->
+  <div id="mobileMenuPanel" style="display:none;position:fixed;left:0;right:0;bottom:52px;background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -4px 20px rgba(0,0,0,.2);z-index:99998;padding:8px 0;">
+    <button class="menu-item" onclick="openAddModal();closeMobilePanel()">➕ タスク追加</button>
+    <button class="menu-item" onclick="exportCSV();closeMobilePanel()">📥 CSV出力</button>
+    <button class="menu-item" onclick="document.getElementById('csvImportInput').click();closeMobilePanel()">📤 CSVインポート</button>
+    <button class="menu-item" onclick="exportAllProjects();closeMobilePanel()">💾 全大会バックアップ</button>
+    <button class="menu-item" onclick="exportJSON();closeMobilePanel()">💾 この大会バックアップ</button>
+    <button class="menu-item" onclick="document.getElementById('jsonRestoreInput').click();closeMobilePanel()">♻️ 復元</button>
+    <button class="menu-item" onclick="printSchedule();closeMobilePanel()">🖨️ 印刷／PDF</button>
+  </div>
+  <!-- 大会選択パネル -->
+  <div id="mobileProjectPanel" style="display:none;position:fixed;left:0;right:0;bottom:52px;background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -4px 20px rgba(0,0,0,.2);z-index:99998;padding:8px 0;" id="mobileProjectPanel"></div>
+  <!-- ボタン行 -->
+  <button class="btn btn-primary" onclick="openAddModal()" style="flex:1;justify-content:center">＋ タスク追加</button>
+  <button class="btn btn-ghost" onclick="toggleMobileMenu()" style="flex:1;justify-content:center">⚙️ メニュー</button>
+  <button class="btn btn-ghost" onclick="toggleMobileProject()" style="flex:1;justify-content:center;color:var(--blue);border-color:var(--blue)">🎆 大会</button>
 </div>
 
 <div id="globalRowMenu" class="sch-action-menu" style="display:none">
