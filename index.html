@@ -588,7 +588,8 @@ select option{background:#fff;}
       <div id="actionMenu" style="display:none;position:fixed;right:8px;top:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.18);z-index:9999;min-width:160px;overflow:hidden">
         <button class="menu-item" onclick="exportCSV();toggleActionMenu()">📥 CSV出力</button>
         <button class="menu-item" onclick="document.getElementById('csvImportInput').click();toggleActionMenu()">📤 CSVインポート</button>
-        <button class="menu-item" onclick="exportJSON();toggleActionMenu()">💾 バックアップ</button>
+        <button class="menu-item" onclick="exportJSON();toggleActionMenu()">💾 バックアップ（この大会）</button>
+        <button class="menu-item" onclick="exportAllProjects();toggleActionMenu()" style="color:var(--blue);font-weight:700">💾 全大会まとめてバックアップ</button>
         <button class="menu-item" onclick="document.getElementById('jsonRestoreInput').click();toggleActionMenu()">♻️ 復元</button>
         <button class="menu-item" onclick="printSchedule();toggleActionMenu()">🖨️ 印刷／PDF</button>
       </div>
@@ -2079,7 +2080,8 @@ function renderHelp(){
     ${section('⚙️','メニューボタンの機能',[
       ['📥 CSV出力','タスク一覧をExcel形式で保存'],
       ['📤 CSVインポート','CSVからタスクを一括追加・更新'],
-      ['💾 バックアップ','全データをJSONファイルで保存（定期的に推奨）'],
+      ['💾 バックアップ（この大会）','現在開いている大会のデータをJSONファイルで保存'],
+      ['💾 全大会まとめてバックアップ','北海道・たきの・大阪、全3大会のJSONを一気にダウンロード（週1推奨）'],
       ['♻️ 復元','バックアップJSONから全データを復元'],
       ['🖨️ 印刷/PDF','スケジュール表を印刷またはPDF出力'],
     ])}
@@ -3863,6 +3865,7 @@ function exportJSON(){
   const dateStr=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
   const data={
     version: 1,
+    project_id: CURRENT_PROJECT_ID,
     exportedAt: now.toISOString(),
     tasks,
     manuals,
@@ -3874,9 +3877,36 @@ function exportJSON(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download=`北海道芸術花火2026_バックアップ_${dateStr}.json`;
+  a.download=`${CURRENT_PROJECT.name}_バックアップ_${dateStr}.json`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function exportAllProjects(){
+  const now=new Date();
+  const dateStr=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+  let count=0;
+  PROJECTS.forEach((p,i)=>{
+    setTimeout(()=>{
+      const t=JSON.parse(localStorage.getItem(`hf_${p.id}_tasks`)||'[]');
+      const m=JSON.parse(localStorage.getItem(`hf_${p.id}_manuals`)||'{}');
+      const a=JSON.parse(localStorage.getItem(`hf_${p.id}_assignees`)||'[]');
+      const h=JSON.parse(localStorage.getItem(`hf_${p.id}_history`)||'[]');
+      if(!t.length){ console.log(`${p.name}: データなし、スキップ`); return; }
+      const data={version:1,project_id:p.id,exportedAt:now.toISOString(),tasks:t,manuals:m,assignees:a,historyLog:h};
+      const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8;'});
+      const url=URL.createObjectURL(blob);
+      const a2=document.createElement('a');
+      a2.href=url;
+      a2.download=`${p.name}_バックアップ_${dateStr}.json`;
+      a2.click();
+      URL.revokeObjectURL(url);
+      count++;
+      if(count===PROJECTS.filter(p=>JSON.parse(localStorage.getItem(`hf_${p.id}_tasks`)||'[]').length>0).length){
+        console.log('✅ 全プロジェクトのバックアップ完了！');
+      }
+    }, i*800); // 少し間隔をあけてダウンロード
+  });
 }
 
 function importJSON(input){
