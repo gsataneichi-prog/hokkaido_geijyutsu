@@ -2178,7 +2178,7 @@ function clearHistory(){
   if(!confirm('変更履歴をすべて削除しますか？\n（Supabase上の履歴もすべて削除されます）')) return;
   historyLog=[];
   localStorage.setItem(`${LS}_history`,'[]');
-  sb.from('history').delete().neq('id',0).then(()=>{}).catch(()=>{});
+  sb.from('history').delete().eq('project_id',CURRENT_PROJECT_ID).then(()=>{}).catch(()=>{});
   render();
 }
 
@@ -3534,7 +3534,7 @@ function confirmDelete(){
   const idToDel=deleteId;
   tasks=tasks.filter(t=>t.id!==idToDel);
   localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
-  sb.from('tasks').delete().eq('id',idToDel).then(()=>{}).catch(e=>console.warn('Delete failed:',e));
+  sb.from('tasks').delete().eq('id',idToDel).eq('project_id',CURRENT_PROJECT_ID).then(()=>{}).catch(e=>console.warn('Delete failed:',e));
   closeConfirm();rebuildFilters();
   if(currentTab==='schedule') renderKeepScroll(); else render();
 }
