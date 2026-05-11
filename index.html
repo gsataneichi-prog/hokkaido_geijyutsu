@@ -929,11 +929,11 @@ select option{background:#fff;}
 
 <script>
 const INIT=[
-  {id:1,category:"草案",midcategory:"",subcategory:"会場図面",detail:"●前年図面を元に改善点を反映し作成\n※マニュアル参照",assignee:"沼澤",month_statuses:{"12月(前年)": "未"},priority:"中"},
-  {id:2,category:"草案",midcategory:"",subcategory:"チケット シミュレーション",detail:"●収支計画書と券種一覧表を作成\n・収支の８〜９割がチケット売上になるので重要（早割なども計算）\n・PG（プレイガイド）手数料基本６％\n・招待チケットや手売りチケット枚数は、前年度の実績ベースで決定",assignee:"沼澤",month_statuses:{"12月(前年)": "未"},priority:"中"},
-  {id:3,category:"草案",midcategory:"",subcategory:"予算書",detail:"●前年の決算書を参考に作成\n※マニュアル参照",assignee:"沼澤",month_statuses:{"12月(前年)": "未"},priority:"中"},
-  {id:4,category:"草案",midcategory:"",subcategory:"各所連絡",detail:"●日程確定後、迅速に連絡→企画内容など追って共有\n【主な連絡先】\n・主幹各社・札幌市観光MICE(札幌市の窓口)・警備(アルソック/チュウケイ)\n・HIS・シェアタクシー・東警察署・レンタコム・東和(トイレ)・みどり(公園所管)\n・花火師・パイロスミス・東京空港事務所・札幌市消防局・自衛隊",assignee:"沼澤",month_statuses:{"1月": "未"},priority:"中"},
-  {id:5,category:"草案",midcategory:"",subcategory:"携帯基地局",detail:"●携帯電話基地局の設置\n・基本はみどり管理課だが、開催日程の連絡はソフトバンク、au、docomoに直接連絡\n※マニュアル参照",assignee:"沼澤",month_statuses:{"1月": "未"},priority:"中"},
+  {id:1,category:"草案",midcategory:"",subcategory:"会場図面",detail:"●前年図面を元に改善点を反映し作成\n※マニュアル参照",assignee:"未定",month_statuses:{"12月(前年)": "未"},priority:"中"},
+  {id:2,category:"草案",midcategory:"",subcategory:"チケット シミュレーション",detail:"●収支計画書と券種一覧表を作成\n・収支の８〜９割がチケット売上になるので重要（早割なども計算）\n・PG（プレイガイド）手数料基本６％\n・招待チケットや手売りチケット枚数は、前年度の実績ベースで決定",assignee:"未定",month_statuses:{"12月(前年)": "未"},priority:"中"},
+  {id:3,category:"草案",midcategory:"",subcategory:"予算書",detail:"●前年の決算書を参考に作成\n※マニュアル参照",assignee:"未定",month_statuses:{"12月(前年)": "未"},priority:"中"},
+  {id:4,category:"草案",midcategory:"",subcategory:"各所連絡",detail:"●日程確定後、迅速に連絡→企画内容など追って共有\n【主な連絡先】\n・主幹各社・札幌市観光MICE(札幌市の窓口)・警備(アルソック/チュウケイ)\n・HIS・シェアタクシー・東警察署・レンタコム・東和(トイレ)・みどり(公園所管)\n・花火師・パイロスミス・東京空港事務所・札幌市消防局・自衛隊",assignee:"未定",month_statuses:{"1月": "未"},priority:"中"},
+  {id:5,category:"草案",midcategory:"",subcategory:"携帯基地局",detail:"●携帯電話基地局の設置\n・基本はみどり管理課だが、開催日程の連絡はソフトバンク、au、docomoに直接連絡\n※マニュアル参照",assignee:"未定",month_statuses:{"1月": "未"},priority:"中"},
   {id:6,category:"組織",midcategory:"",subcategory:"パートナーズ （出資者/主幹会社）",detail:"●企画書作成/公演概要",assignee:"悠跡",month_statuses:{"12月(前年)": "未"},priority:"中"},
   {id:7,category:"組織",midcategory:"",subcategory:"パートナーズ （出資者/主幹会社）",detail:"●予算書（主幹会議にて承認を得る）",assignee:"中田",month_statuses:{"2月": "未"},priority:"中"},
   {id:8,category:"組織",midcategory:"",subcategory:"パートナーズ （出資者/主幹会社）",detail:"●契約書作成（押印は大居さん）",assignee:"中田",month_statuses:{"2月": "未"},priority:"中"},
@@ -959,17 +959,17 @@ const INIT=[
   {id:28,category:"組織",midcategory:"",subcategory:"学生ボランティア",detail:"●事前説明会（今は廃止している？後藤さん確認）",assignee:"悠跡",month_statuses:{"8月": "未"},priority:"中"},
   {id:29,category:"組織",midcategory:"",subcategory:"学生ボランティア",detail:"●現地説明会（後藤さんが当日説明/ケア）",assignee:"悠跡",month_statuses:{"9月": "未"},priority:"中"},
   {id:30,category:"組織",midcategory:"",subcategory:"学生ボランティア",detail:"●ボランティア活動証明書",assignee:"大居",month_statuses:{"8月": "未"},priority:"中"},
-  {id:31,category:"申請",midcategory:"",subcategory:"札幌市消防局",detail:"●火薬類消費許可申請\n・申請期限：開催日の３週間前（2ヶ月前から着手が理想）\n※マニュアル参照",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
-  {id:32,category:"申請",midcategory:"",subcategory:"札幌市東消防署",detail:"●露店開設届\n・申請期限：開催日の1ヶ月前\n※マニュアル参照",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
-  {id:33,category:"申請",midcategory:"",subcategory:"札幌市東消防署",detail:"●臨時客席設置届\n・申請期限：◯◯◯◯\n※マニュアル参照",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
+  {id:31,category:"申請",midcategory:"",subcategory:"札幌市消防局",detail:"●火薬類消費許可申請\n・申請期限：開催日の３週間前（2ヶ月前から着手が理想）\n※マニュアル参照",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
+  {id:32,category:"申請",midcategory:"",subcategory:"札幌市東消防署",detail:"●露店開設届\n・申請期限：開催日の1ヶ月前\n※マニュアル参照",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
+  {id:33,category:"申請",midcategory:"",subcategory:"札幌市東消防署",detail:"●臨時客席設置届\n・申請期限：◯◯◯◯\n※マニュアル参照",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
   {id:34,category:"申請",midcategory:"",subcategory:"東京空港事務所",detail:"●自衛隊丘珠駐屯地に許可申請（※東京空港事務局の申請前）\n・自衛隊の大槻さん（連絡先）\n・空域の管制官がそれぞれで、モエレに関しては丘珠空港（自衛隊）管轄\n※新規会場の際には最初から根回し必要",assignee:"中山",month_statuses:{"7月": "未"},priority:"中"},
   {id:35,category:"申請",midcategory:"",subcategory:"東京空港事務所",detail:"●ロケット等の打ち上げ届出\n・消防局の許可申請後すぐに行う。（期限は２週間前）\n・消防局の申請書類全てをコピーし添付\n・申請前に自衛隊に許可をとる\n【申請書類】\n・許可証送付願い→東京空港事務局宛て（送付状）\n・消費順序(プログラム)→GSA作成？\n・煙火消費計画書→GSA作成？\n※添付資料として↓\n・消費場所見取図(５万分の１)及び付近見取図\n・土地使用承諾書\n・打揚業者との契約書の写し\n・危害予防の方法を記載した書類\n・従事者名簿\n・花火の打上げ許可申請書→GSA作成？",assignee:"中山",month_statuses:{"7月": "未"},priority:"中"},
   {id:36,category:"申請",midcategory:"",subcategory:"河川事務所",detail:"●使用承認申請\n・基本、保安距離の被るところには必ず申請する！（北芸の場合は河川と公園）\n※花火の保安距離がモエレ沼にかぶるため申請必要\n【申請書類】\n・河川敷地使用届\n・現場展開図\n・保安距離図（展開図＝配置図）は大矢さんに作成依頼\n・消費順序\n・煙火消費計画書\n※河川敷地に係る面積の計算は元図面を持っている杉村さんに作成依頼",assignee:"中山",month_statuses:{"7月": "未"},priority:"中"},
   {id:37,category:"申請",midcategory:"",subcategory:"東土木センター",detail:"●道路の管理者\n・国道・都道府県道・市町村道でそれぞれ異なる\n・道路を使用する場合は、まず各道路管理者へ「道路占用許可」の申請\n・あわせて、交通規制等を伴う場合は、所轄警察署へ「道路使用許可」の申請も行う\n※申請スケジュールの詳細は中山さんに確認\n・東警察署から使用許可後→東土木センターへ提出\n※約３週間前締め切りだが、2ヶ月前が安全！\n【申請書類】\n・道路占有許可申請\n・交通規制看板設置場所\n・交通規制表\n・場外サイン関係図面（看板/コーンの設置場所）\n・減免申請書\n・道路占有申請書\n・道路占有物リスト",assignee:"中山",month_statuses:{"7月": "未"},priority:"中"},
-  {id:38,category:"申請",midcategory:"",subcategory:"緑化協会",detail:"●飲食出店者用の公園内侵入許可証\n・公園内は車の侵入は基本禁止、緑化協会から緑の管理課に許可をもらう",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
-  {id:39,category:"申請",midcategory:"",subcategory:"緑化協会",detail:"●出店契約書\n・フードメニュー\n・テント設置図\n・飲食ブース図面\n※考え方は、モエレ沼公園の持ち主は札幌市で、管理は緑化協会\n   なので、出店は緑化協会に「出店契約書」と締結",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
-  {id:40,category:"申請",midcategory:"",subcategory:"みどりの管理課",detail:"●公園内侵入許可証\n・公園内は車の侵入は基本禁止なので、進入車両リスト提出\n※飲食出店者以外の搬入車両=花火師や仮設車",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
-  {id:41,category:"申請",midcategory:"",subcategory:"みどりの管理課",detail:"●公園使用許可申請書兼使用料減免申請\n・現場展開図→大矢さんから資料をもらう\n・保安距離図→大矢さんから資料をもらう\n・花火現場占有面積計算書\n・設置物申請資料\n・占用面積計算書\n・申請会場図面\n・公園使用許可申請書兼使用量減免申請書",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
+  {id:38,category:"申請",midcategory:"",subcategory:"緑化協会",detail:"●飲食出店者用の公園内侵入許可証\n・公園内は車の侵入は基本禁止、緑化協会から緑の管理課に許可をもらう",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
+  {id:39,category:"申請",midcategory:"",subcategory:"緑化協会",detail:"●出店契約書\n・フードメニュー\n・テント設置図\n・飲食ブース図面\n※考え方は、モエレ沼公園の持ち主は札幌市で、管理は緑化協会\n   なので、出店は緑化協会に「出店契約書」と締結",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
+  {id:40,category:"申請",midcategory:"",subcategory:"みどりの管理課",detail:"●公園内侵入許可証\n・公園内は車の侵入は基本禁止なので、進入車両リスト提出\n※飲食出店者以外の搬入車両=花火師や仮設車",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
+  {id:41,category:"申請",midcategory:"",subcategory:"みどりの管理課",detail:"●公園使用許可申請書兼使用料減免申請\n・現場展開図→大矢さんから資料をもらう\n・保安距離図→大矢さんから資料をもらう\n・花火現場占有面積計算書\n・設置物申請資料\n・占用面積計算書\n・申請会場図面\n・公園使用許可申請書兼使用量減免申請書",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
   {id:42,category:"申請",midcategory:"",subcategory:"みどりの管理課",detail:"●ドローン\n・事前連絡→目的は記録映像\n※札幌市のプロモーションにもなる？という交渉でイレギュラーで通っている\n・飛行計画=フライトマップ\n※ブロンソン作成の書類を提出\n・国土交通省の許可\n※撮影者=ブロンソンが行うが、進捗はこちらで管理\n・保険資料（三井住友海上火災保険）→鳥屋さん\n・無人航空機一覧表→鳥屋さん",assignee:"伊藤",month_statuses:{"8月": "未"},priority:"中"},
   {id:43,category:"申請",midcategory:"名誉顧問 開催委員会",subcategory:"北海道知事",detail:"●去年の書式そのまま活用\n・開催委員会「名誉顧問」就任依頼書\n・開催委員会定款・名簿\n・事業概要書（企画書）\n・収支計画書（予算書をもとに作成）\n・前年の開催報告書",assignee:"大居",month_statuses:{"2月": "未"},priority:"中"},
   {id:44,category:"申請",midcategory:"名誉顧問 開催委員会",subcategory:"札幌市長",detail:"●去年の書式そのまま活用\n・開催委員会「名誉顧問」就任依頼書\n・開催委員会定款・名簿\n・事業概要書（企画書）\n・収支計画書（予算書をもとに作成）\n・前年の開催報告書",assignee:"大居",month_statuses:{"2月": "未"},priority:"中"},
@@ -982,18 +982,18 @@ const INIT=[
   {id:51,category:"申請",midcategory:"名義後援申請",subcategory:"新聞社",detail:"●後援申請書他・企画書　（北芸は廃止）\n・読売、毎日、朝日（WEB）、道新（WEB)",assignee:"未定",month_statuses:{},priority:"中"},
   {id:52,category:"申請",midcategory:"名義後援申請",subcategory:"団体・法人",detail:"●後援申請書他・企画書　（北芸は要検討）\n・札幌商工会議所、札幌観光協会、北海道観光機構",assignee:"未定",month_statuses:{},priority:"中"},
   {id:53,category:"申請",midcategory:"名義後援申請",subcategory:"イサム・ノグチ財団",detail:"●後援申請書　メール\n・益田美保子さん（m-masuda@isamunoguchi.or.jp）に概要メールするだけ。\n・提出書類もなし",assignee:"伊藤",month_statuses:{"2月": "未"},priority:"中"},
-  {id:54,category:"保険",midcategory:"",subcategory:"保険",detail:"●興行中止保険加入\n・イベントが中止になった際の経費負担を補償\n・対象になる中止理由を保険担当者と要相談\n・対象→雨天が基本で、オプションで地震や交通障害\n・対象外→感染症、テロ、戦争、国事\n・保険クリエーション金田さん（毎年相見積等は保管必須）\n・保険証券（紙の原本）を、保険証券クリアファイルに保管",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
-  {id:55,category:"保険",midcategory:"",subcategory:"保険",detail:"●施設賠償責任保険（会場内)\n・設営中に公園の施設を破損してしまった場合など。雑踏事故も確認",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
-  {id:56,category:"保険",midcategory:"",subcategory:"保険",detail:"●賠責保険（駐車場）\n・公園外の「小鍛冶組」や「さとらんど」も含めて加入",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
-  {id:57,category:"保険",midcategory:"",subcategory:"保険",detail:"●傷害保険\n・身内スタッフやボランティアスタッフの作業中の怪我等が対象、従業員スタッフは対象外",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
+  {id:54,category:"保険",midcategory:"",subcategory:"保険",detail:"●興行中止保険加入\n・イベントが中止になった際の経費負担を補償\n・対象になる中止理由を保険担当者と要相談\n・対象→雨天が基本で、オプションで地震や交通障害\n・対象外→感染症、テロ、戦争、国事\n・保険クリエーション金田さん（毎年相見積等は保管必須）\n・保険証券（紙の原本）を、保険証券クリアファイルに保管",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
+  {id:55,category:"保険",midcategory:"",subcategory:"保険",detail:"●施設賠償責任保険（会場内)\n・設営中に公園の施設を破損してしまった場合など。雑踏事故も確認",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
+  {id:56,category:"保険",midcategory:"",subcategory:"保険",detail:"●賠責保険（駐車場）\n・公園外の「小鍛冶組」や「さとらんど」も含めて加入",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
+  {id:57,category:"保険",midcategory:"",subcategory:"保険",detail:"●傷害保険\n・身内スタッフやボランティアスタッフの作業中の怪我等が対象、従業員スタッフは対象外",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
   {id:58,category:"保険",midcategory:"",subcategory:"保険",detail:"●煙火保険\n・申請先：日本煙火協会協会\n・会員から花火玉の発注金額をもらって申請。モエレならパイロスミスに依頼\n・パイロスミスも保険もあるので、花火に関する事故の場合はそれも補償\n・会場のテントが穴が空いた等はこれと、施設賠償責任保険の２つが使える\n※下記シート 煙火保険2023参照",assignee:"悠跡",month_statuses:{"7月": "未"},priority:"中"},
-  {id:59,category:"会場警備",midcategory:"",subcategory:"警察",detail:"●道路使用許可（看板用）\n・自主警備(警備会社に依頼して実施)が基本だが警察にも協力してもらうイメージ\n※警察は指導する立場。\n・伊藤、沼澤が作成した場外サイン図面を杉村さんに提出し、修正図面で最終確定\n→道路占用申請時・みどりの管理課などに送る\n・警察（交通課に雑踏警備の指導からそれぞれ指導してもらう）\n・一部の道路が通行止めになる場合があって、その場合はタウンプラスなどで公表する\n・警察との現地下見がおわったら消防所から許可書がおりる。",assignee:"沼澤",month_statuses:{"1月": "未"},priority:"中"},
-  {id:60,category:"会場警備",midcategory:"",subcategory:"警察",detail:"●交通規制看板を借りる\n・標識を勝手に設置はNG「通行止め標識」を複数の警察署交通課から貸出\n（毎年、佐伯さんと半田さんが担当してくれている）",assignee:"沼澤",month_statuses:{"6月": "未"},priority:"中"},
-  {id:61,category:"会場警備",midcategory:"",subcategory:"警備会社",detail:"●挨拶廻り同行依頼",assignee:"沼澤",month_statuses:{"2月": "未"},priority:"中"},
-  {id:62,category:"会場警備",midcategory:"",subcategory:"警備会社",detail:"●警備打ち合わせ",assignee:"沼澤",month_statuses:{"2月": "未"},priority:"中"},
-  {id:63,category:"会場警備",midcategory:"",subcategory:"警備会社",detail:"●警備計画書",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
-  {id:64,category:"会場警備",midcategory:"",subcategory:"警備会社",detail:"●契約\n・業者委託契約書（中止時明記）→押印は大居さん。",assignee:"沼澤",month_statuses:{"2月": "未"},priority:"中"},
-  {id:65,category:"会場警備",midcategory:"",subcategory:"警備会社",detail:"●反省会廻り",assignee:"沼澤",month_statuses:{"2月": "未"},priority:"中"},
+  {id:59,category:"会場警備",midcategory:"",subcategory:"警察",detail:"●道路使用許可（看板用）\n・自主警備(警備会社に依頼して実施)が基本だが警察にも協力してもらうイメージ\n※警察は指導する立場。\n・伊藤、沼澤が作成した場外サイン図面を杉村さんに提出し、修正図面で最終確定\n→道路占用申請時・みどりの管理課などに送る\n・警察（交通課に雑踏警備の指導からそれぞれ指導してもらう）\n・一部の道路が通行止めになる場合があって、その場合はタウンプラスなどで公表する\n・警察との現地下見がおわったら消防所から許可書がおりる。",assignee:"未定",month_statuses:{"1月": "未"},priority:"中"},
+  {id:60,category:"会場警備",midcategory:"",subcategory:"警察",detail:"●交通規制看板を借りる\n・標識を勝手に設置はNG「通行止め標識」を複数の警察署交通課から貸出\n（毎年、佐伯さんと半田さんが担当してくれている）",assignee:"未定",month_statuses:{"6月": "未"},priority:"中"},
+  {id:61,category:"会場警備",midcategory:"",subcategory:"警備会社",detail:"●挨拶廻り同行依頼",assignee:"未定",month_statuses:{"2月": "未"},priority:"中"},
+  {id:62,category:"会場警備",midcategory:"",subcategory:"警備会社",detail:"●警備打ち合わせ",assignee:"未定",month_statuses:{"2月": "未"},priority:"中"},
+  {id:63,category:"会場警備",midcategory:"",subcategory:"警備会社",detail:"●警備計画書",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
+  {id:64,category:"会場警備",midcategory:"",subcategory:"警備会社",detail:"●契約\n・業者委託契約書（中止時明記）→押印は大居さん。",assignee:"未定",month_statuses:{"2月": "未"},priority:"中"},
+  {id:65,category:"会場警備",midcategory:"",subcategory:"警備会社",detail:"●反省会廻り",assignee:"未定",month_statuses:{"2月": "未"},priority:"中"},
   {id:66,category:"会場警備",midcategory:"",subcategory:"無料客対策",detail:"●予想数（北芸は不要）",assignee:"未定",month_statuses:{},priority:"中"},
   {id:67,category:"会場警備",midcategory:"",subcategory:"無料客対策",detail:"●対応策（北芸は不要）",assignee:"未定",month_statuses:{},priority:"中"},
   {id:68,category:"会場警備",midcategory:"",subcategory:"来場者導線計画",detail:"●来場者交通手段予想（北芸は不要）",assignee:"未定",month_statuses:{},priority:"中"},
@@ -1053,16 +1053,16 @@ const INIT=[
   {id:122,category:"花火",midcategory:"",subcategory:"演出",detail:"●選曲\n・社長から大矢さんへの進捗確認",assignee:"社長",month_statuses:{"12月(前年)": "未"},priority:"中"},
   {id:123,category:"花火",midcategory:"",subcategory:"演出",detail:"●マスタリング\n・モエレの場合はケンケンさんにお任せしている\n※他会場だとスタジオ作業に立ち会うことあり",assignee:"社長",month_statuses:{"12月(前年)": "未"},priority:"中"},
   {id:124,category:"花火",midcategory:"",subcategory:"演出",detail:"●パイロスミスとGSA（モエレに関しては実行委員会かも）で契約\n・業者委託契約書（中止時明記）→押印は大居さん",assignee:"中田",month_statuses:{"12月(前年)": "未"},priority:"中"},
-  {id:125,category:"会場",midcategory:"",subcategory:"仮設 （沼さん確認！）",detail:"●会場図面作成\n・図面作成は美術センターの杉村さんに希望伝え、作成してもらう\n※LINEグループ「美セン-グレスカ」で連絡共有",assignee:"沼澤",month_statuses:{"12月(前年)": "未"},priority:"中"},
-  {id:126,category:"会場",midcategory:"",subcategory:"仮設 （沼さん確認！）",detail:"●基本プラン作成\n・見積後開始",assignee:"沼澤",month_statuses:{"5月": "未"},priority:"中"},
-  {id:127,category:"会場",midcategory:"",subcategory:"仮設 （沼さん確認！）",detail:"●契約\n・業者委託契約書（中止時明記）→押印は大居さん。",assignee:"沼澤",month_statuses:{"5月": "未"},priority:"中"},
-  {id:128,category:"会場",midcategory:"",subcategory:"仮設 （沼さん確認！）",detail:"●設営/撤去工程表作成（人員配置）\n・GSAで作成して、仮設業者と事前打合せ→確定版をみどりの管理課に提出\n・みどりの管理課に提出するのでかなり細かい\n※何日に何をどこに設置するか。モエレの場合はかなり細かく確認されるので要注意！\n・業者側との工程表とは別に、スタッフ向けの工程表は別に作成必要？\n（2026から業者変わるので未定）",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
-  {id:129,category:"会場",midcategory:"",subcategory:"仮設 （沼さん確認！）",detail:"●資材リスト\n・GSA作成",assignee:"沼澤",month_statuses:{},priority:"中"},
-  {id:130,category:"会場",midcategory:"",subcategory:"仮設 （沼さん確認！）",detail:"・助っ人手配（開催委員会の人員確認）",assignee:"沼澤",month_statuses:{"8月": "未"},priority:"中"},
+  {id:125,category:"会場",midcategory:"",subcategory:"仮設 （沼さん確認！）",detail:"●会場図面作成\n・図面作成は美術センターの杉村さんに希望伝え、作成してもらう\n※LINEグループ「美セン-グレスカ」で連絡共有",assignee:"未定",month_statuses:{"12月(前年)": "未"},priority:"中"},
+  {id:126,category:"会場",midcategory:"",subcategory:"仮設 （沼さん確認！）",detail:"●基本プラン作成\n・見積後開始",assignee:"未定",month_statuses:{"5月": "未"},priority:"中"},
+  {id:127,category:"会場",midcategory:"",subcategory:"仮設 （沼さん確認！）",detail:"●契約\n・業者委託契約書（中止時明記）→押印は大居さん。",assignee:"未定",month_statuses:{"5月": "未"},priority:"中"},
+  {id:128,category:"会場",midcategory:"",subcategory:"仮設 （沼さん確認！）",detail:"●設営/撤去工程表作成（人員配置）\n・GSAで作成して、仮設業者と事前打合せ→確定版をみどりの管理課に提出\n・みどりの管理課に提出するのでかなり細かい\n※何日に何をどこに設置するか。モエレの場合はかなり細かく確認されるので要注意！\n・業者側との工程表とは別に、スタッフ向けの工程表は別に作成必要？\n（2026から業者変わるので未定）",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
+  {id:129,category:"会場",midcategory:"",subcategory:"仮設 （沼さん確認！）",detail:"●資材リスト\n・GSA作成",assignee:"未定",month_statuses:{},priority:"中"},
+  {id:130,category:"会場",midcategory:"",subcategory:"仮設 （沼さん確認！）",detail:"・助っ人手配（開催委員会の人員確認）",assignee:"未定",month_statuses:{"8月": "未"},priority:"中"},
   {id:131,category:"会場",midcategory:"",subcategory:"香盤作り",detail:"●香盤表作り\n・香盤表＝座席図面\n・香盤表のマスターデータ→PG配券に使用\n・A3用紙に印刷した香盤表→誰に配布したかの記録用に使用",assignee:"未定",month_statuses:{"6月": "未"},priority:"中"},
   {id:132,category:"会場",midcategory:"",subcategory:"香盤作り",detail:"●香盤表シール印刷手配\n・印刷業者（ワイツープリント）→会場で椅子に貼ります",assignee:"中山",month_statuses:{"8月": "未"},priority:"中"},
   {id:133,category:"会場",midcategory:"",subcategory:"会場内看板",detail:"●みどりの管理課にリスト提出\n・事前看板（・開催の１〜２週間前から「公園使用の制限」の案内）\n・トイレサイン\n・入場ゲートなど",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
-  {id:134,category:"駐車場",midcategory:"",subcategory:"駐車場使用申請",detail:"●さとらんど（観光MICE経由）  提出先：札幌市農政部（MICE経由）\n・さとらんど第◯事業計画書\n・駐車場収支予算\n・使用承認申請書\n・使用スケジュール\n・配置図（展開図）\n・北海道モエレ沼芸術花火2023開催における協力依頼について\n・さとらんど警備マニュアル\n・行政財産使用申告書(1.2.3 /4/6/それぞれ提出→札幌市長宛 )\n・使用許可期間の満了後、次の内容を2か月以内に報告すること。以下ア～エの項目に関しての記録写真撮影も事前に手配すること。\nア）使用許可期間中に新たに取り付けた看板等の設置前と撤去後について写真をつけて報告すること。\nイ）東警察署より指導を受けている迷惑車両や周辺地域の混雑緩和にどれだけの効果があったのか、図面と当日の写真をつけて報告すること。\nウ）実施した警備および設置した投光器、トイレ等について、役割分担を示した組織図、申請者の組織内で定めた安全基準を示すもの、警備マニュアル、配置図、当日の写真をつけて報告すること。\nエ）苦情や問い合わせに対する組織図、苦情マニュアル、実際の受付件数と内容のわかる資料を添付し、報告すること。\n※Dropbox 09.交通 （駐車場/タクシー/バス）",assignee:"沼澤",month_statuses:{"12月(前年)": "未"},priority:"中"},
+  {id:134,category:"駐車場",midcategory:"",subcategory:"駐車場使用申請",detail:"●さとらんど（観光MICE経由）  提出先：札幌市農政部（MICE経由）\n・さとらんど第◯事業計画書\n・駐車場収支予算\n・使用承認申請書\n・使用スケジュール\n・配置図（展開図）\n・北海道モエレ沼芸術花火2023開催における協力依頼について\n・さとらんど警備マニュアル\n・行政財産使用申告書(1.2.3 /4/6/それぞれ提出→札幌市長宛 )\n・使用許可期間の満了後、次の内容を2か月以内に報告すること。以下ア～エの項目に関しての記録写真撮影も事前に手配すること。\nア）使用許可期間中に新たに取り付けた看板等の設置前と撤去後について写真をつけて報告すること。\nイ）東警察署より指導を受けている迷惑車両や周辺地域の混雑緩和にどれだけの効果があったのか、図面と当日の写真をつけて報告すること。\nウ）実施した警備および設置した投光器、トイレ等について、役割分担を示した組織図、申請者の組織内で定めた安全基準を示すもの、警備マニュアル、配置図、当日の写真をつけて報告すること。\nエ）苦情や問い合わせに対する組織図、苦情マニュアル、実際の受付件数と内容のわかる資料を添付し、報告すること。\n※Dropbox 09.交通 （駐車場/タクシー/バス）",assignee:"未定",month_statuses:{"12月(前年)": "未"},priority:"中"},
   {id:135,category:"駐車場",midcategory:"",subcategory:"駐車場使用申請",detail:"●モエレ会館\n・例年予算5万（税込）\n・後藤さんを通して許可をとる？(確認)\n・モエレ自治会管轄",assignee:"後藤",month_statuses:{"2月": "未"},priority:"中"},
   {id:136,category:"駐車場",midcategory:"",subcategory:"駐車場使用申請",detail:"●ロジスティード（日立物流）\n・実行委員の後藤さん担当",assignee:"後藤",month_statuses:{"2月": "未"},priority:"中"},
   {id:137,category:"駐車場",midcategory:"",subcategory:"駐車場使用申請",detail:"●小鍛冶\n・実行委員長の糸川さん担当",assignee:"糸川",month_statuses:{"8月": "未"},priority:"中"},
@@ -1073,9 +1073,9 @@ const INIT=[
   {id:142,category:"運営",midcategory:"",subcategory:"スタッフ",detail:"●アルバイト手配\n・ステージ設営撤去（手配はGSA、設営撤去担当は唐澤さん）\n・たまゆらタクシープール担当\n・シェアタクシー担当\n・緑地公園駐車場管理スタッフ担当\n・軒先パーキング担当\n・外周コーン撤去担当\n・あいの里バス担当\n・当日コールセンター 等\n※下記シート KSPスタッフ_2026 ←手配状況確認できます。",assignee:"種市",month_statuses:{"4月": "未"},priority:"中"},
   {id:143,category:"運営",midcategory:"",subcategory:"スタッフ",detail:"●交通・宿泊手配（舞台スタッフ/各地スタッフ）",assignee:"加藤",month_statuses:{"4月": "未"},priority:"中"},
   {id:144,category:"運営",midcategory:"",subcategory:"スタッフ",detail:"●スタッフパス/プレスパス送付\n・取材関係、当日スタッフに当日つけてもらうパスを送付",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
-  {id:145,category:"運営",midcategory:"",subcategory:"フード",detail:"●フード出店概要\n・出店マニュアルと出店申込書を作成し、Webに掲載するよう三上さんに依頼",assignee:"沼澤",month_statuses:{"4月": "未"},priority:"中"},
-  {id:146,category:"運営",midcategory:"",subcategory:"フード",detail:"●出店者募集\n・フード誓約書\n・飲食注意事項\n・防災安全自己点検票",assignee:"沼澤",month_statuses:{"4月": "未"},priority:"中"},
-  {id:147,category:"運営",midcategory:"",subcategory:"フード",detail:"●東保健センター提出\n・企画書\n・図面集\n・後援等承認決定通知書(MICE)\n・西フードブース図・中央フードブース図・東フードブース図\n・出店依頼一覧について",assignee:"沼澤",month_statuses:{"7月": "未"},priority:"中"},
+  {id:145,category:"運営",midcategory:"",subcategory:"フード",detail:"●フード出店概要\n・出店マニュアルと出店申込書を作成し、Webに掲載するよう三上さんに依頼",assignee:"未定",month_statuses:{"4月": "未"},priority:"中"},
+  {id:146,category:"運営",midcategory:"",subcategory:"フード",detail:"●出店者募集\n・フード誓約書\n・飲食注意事項\n・防災安全自己点検票",assignee:"未定",month_statuses:{"4月": "未"},priority:"中"},
+  {id:147,category:"運営",midcategory:"",subcategory:"フード",detail:"●東保健センター提出\n・企画書\n・図面集\n・後援等承認決定通知書(MICE)\n・西フードブース図・中央フードブース図・東フードブース図\n・出店依頼一覧について",assignee:"未定",month_statuses:{"7月": "未"},priority:"中"},
   {id:148,category:"運営",midcategory:"",subcategory:"救護",detail:"●救護打合せ\n・札幌救急リリーフ(有料)",assignee:"伊藤",month_statuses:{"7月": "未"},priority:"中"},
   {id:149,category:"運営",midcategory:"",subcategory:"救護",detail:"●救護マニュアル作成\n・救急車とのドッキングポイントを事前打合せしておく\n・初開催会場だと、輸送先の病院と提携しておくなど必要",assignee:"伊藤",month_statuses:{"7月": "未"},priority:"中"},
   {id:150,category:"運営",midcategory:"",subcategory:"救護",detail:"●搬送先病院の協力要請",assignee:"伊藤",month_statuses:{"7月": "未"},priority:"中"},
@@ -1115,7 +1115,7 @@ const INIT=[
   {id:184,category:"経理事務",midcategory:"",subcategory:"事務局経理 （大居さん確認）",detail:"●支払",assignee:"未定",month_statuses:{},priority:"中"},
   {id:185,category:"経理事務",midcategory:"",subcategory:"事務局経理 （大居さん確認）",detail:"●アルバイト給料計算",assignee:"未定",month_statuses:{},priority:"中"},
   {id:186,category:"経理事務",midcategory:"",subcategory:"事務局経理 （大居さん確認）",detail:"●まとめ/月末報告",assignee:"未定",month_statuses:{},priority:"中"},
-  {id:187,category:"開催後",midcategory:"",subcategory:"挨拶回り",detail:"●警察",assignee:"沼澤",month_statuses:{"9月": "未"},priority:"中"},
+  {id:187,category:"開催後",midcategory:"",subcategory:"挨拶回り",detail:"●警察",assignee:"未定",month_statuses:{"9月": "未"},priority:"中"},
   {id:188,category:"開催後",midcategory:"",subcategory:"挨拶回り",detail:"●地元",assignee:"未定",month_statuses:{"9月": "未"},priority:"中"},
   {id:189,category:"開催後",midcategory:"",subcategory:"挨拶回り",detail:"●消防",assignee:"未定",month_statuses:{"9月": "未"},priority:"中"},
   {id:190,category:"開催後",midcategory:"",subcategory:"挨拶回り",detail:"●札幌市",assignee:"未定",month_statuses:{"9月": "未"},priority:"中"},
@@ -1123,7 +1123,7 @@ const INIT=[
   {id:192,category:"開催後",midcategory:"",subcategory:"挨拶回り",detail:"●協賛者",assignee:"未定",month_statuses:{"9月": "未"},priority:"中"},
   {id:193,category:"開催後",midcategory:"",subcategory:"反省会",detail:"●実行委員会",assignee:"中田",month_statuses:{"9月": "未"},priority:"中"},
   {id:194,category:"開催後",midcategory:"",subcategory:"反省会",detail:"●主管会社",assignee:"未定",month_statuses:{"9月": "未"},priority:"中"},
-  {id:195,category:"開催後",midcategory:"",subcategory:"反省会",detail:"●警察",assignee:"沼澤",month_statuses:{"9月": "未"},priority:"中"},
+  {id:195,category:"開催後",midcategory:"",subcategory:"反省会",detail:"●警察",assignee:"未定",month_statuses:{"9月": "未"},priority:"中"},
   {id:196,category:"開催後",midcategory:"",subcategory:"反省会",detail:"●消防",assignee:"未定",month_statuses:{"9月": "未"},priority:"中"},
   {id:197,category:"開催後",midcategory:"",subcategory:"反省会",detail:"●報告書作成\n・開催報告書の作成、協賛・企業へ送付（大居さん？）\n・購入者属性データ（梅田or川内）\n・広報計画とチケット売上（梅田or川内）",assignee:"中田",month_statuses:{"9月": "未"},priority:"中"},
   {id:198,category:"開催後",midcategory:"",subcategory:"打上げ",detail:"●開催委員会",assignee:"未定",month_statuses:{"9月": "未"},priority:"中"},
@@ -1146,16 +1146,16 @@ const INIT=[
 /* ═══════════════ CONSTANTS ═══════════════ */
 const MONTHS=['12月(前年)','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 const NOW_MONTH=(()=>{const m=new Date().getMonth()+1;const y=new Date().getFullYear();const d=new Date().getMonth();return d===11?'12月(前年)':m+'月';})();
-const HONBAN_MONTH='9月';
 /* ═══════════════ PROJECTS ═══════════════ */
 const PROJECTS=[
-  {id:'hokkaido2026', name:'北海道芸術花火2026', date:'2026-09-06', emoji:'🎆'},
-  {id:'taki2026',     name:'たきの花火2026',     date:'2026-08-01', emoji:'🎇'},
-  {id:'osaka2026',    name:'大阪芸術花火2026',    date:'2026-10-01', emoji:'✨'},
+  {id:'hokkaido2026', name:'北海道芸術花火2026', date:'2026-09-06', emoji:'🎆', honban:'9月'},
+  {id:'taki2026',     name:'たきの花火2026',     date:'2026-08-01', emoji:'🎇', honban:'6月'},
+  {id:'osaka2026',    name:'大阪芸術花火2026',    date:'2026-10-01', emoji:'✨', honban:'10月'},
 ];
 const _urlParams=new URLSearchParams(location.search);
 const CURRENT_PROJECT_ID=_urlParams.get('project')||'hokkaido2026';
 const CURRENT_PROJECT=PROJECTS.find(p=>p.id===CURRENT_PROJECT_ID)||PROJECTS[0];
+const HONBAN_MONTH=CURRENT_PROJECT.honban;
 // localStorageキープレフィックス（プロジェクトごとに独立）
 const LS=`hf_${CURRENT_PROJECT_ID}`;
 
@@ -1203,7 +1203,7 @@ async function loadHistoryFromSupabase(){
 }
 
 let tasks=JSON.parse(localStorage.getItem(`${LS}_tasks`)||'null')||INIT.map(t=>(({...t,month_statuses:{...t.month_statuses}})));
-let assignees=JSON.parse(localStorage.getItem(`${LS}_assignees`)||'null')||['中田','沼澤','伊藤','中山','大居','川内','三上','種市','悠跡','城木','加藤','中島','梅田','未定'];
+let assignees=JSON.parse(localStorage.getItem(`${LS}_assignees`)||'null')||['中田','伊藤','中山','大居','川内','三上','種市','悠跡','城木','加藤','中島','梅田','未定'];
 let manuals=JSON.parse(localStorage.getItem(`${LS}_manuals`)||'{}');
 
 // Supabaseからデータを読み込む
