@@ -2708,7 +2708,7 @@ function moveRow(id, dir){
   localStorage.setItem(`${LS}_tasks`,JSON.stringify(tasks));
   [t,swap].forEach(x=>{
     _myRecentUpdates.add(x.id);
-    sb.from('tasks').upsert([{id:x.id,data:x,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
+    sb.from('tasks').upsert([{id:x.id,project_id:CURRENT_PROJECT_ID,data:x,updated_at:new Date().toISOString()}]).then(()=>{}).catch(()=>{});
   });
   renderKeepScroll();
 }
@@ -3504,7 +3504,7 @@ function saveTask(){
         // 編集の場合は変更タスクだけ保存
         const taskToSave=tasks.find(function(x){return x.id===savedId;});
         if(taskToSave){
-          sb.from('tasks').upsert([{id:taskToSave.id,data:taskToSave,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(e){console.warn('save failed',e);});
+          sb.from('tasks').upsert([{id:taskToSave.id,project_id:CURRENT_PROJECT_ID,data:taskToSave,updated_at:new Date().toISOString()}]).then(function(){}).catch(function(e){console.warn('save failed',e);});
         }
       }
     } else {
